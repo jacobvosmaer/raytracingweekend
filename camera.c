@@ -32,6 +32,7 @@ double intervalclamp(struct interval iv, double x) {
 void writecolor(FILE *out, vec3 color, int nsamples) {
   struct interval intensity = interval(0, 0.999);
   color = v3scale(color, 1.0 / nsamples);
+  color = v3(sqrt(color.x), sqrt(color.y), sqrt(color.z));
   fprintf(out, "%d %d %d\n", (int)(256 * intervalclamp(intensity, color.x)),
           (int)(256 * intervalclamp(intensity, color.y)),
           (int)(256 * intervalclamp(intensity, color.z)));
