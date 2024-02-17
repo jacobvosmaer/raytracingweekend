@@ -47,8 +47,9 @@ typedef struct {
 
 /* outwardnormal must be unit vector */
 void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
+  vec3 zero = {0};
   rec->frontface = v3dot(r.dir, outwardnormal) < 0;
-  rec->normal = rec->frontface ? outwardnormal : v3scale(outwardnormal, -1);
+  rec->normal = rec->frontface ? outwardnormal : v3sub(zero, outwardnormal);
 }
 
 int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
