@@ -40,9 +40,8 @@ vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 
 ray rayfromto(vec3 from, vec3 to) {
   ray r;
-  to = v3sub(to, from);
   r.orig = from;
-  r.dir = to;
+  r.dir = v3sub(to, from);
   return r;
 }
 
