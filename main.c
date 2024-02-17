@@ -52,14 +52,14 @@ vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 double hitsphere(vec3 center, double radius, ray r) {
   vec3 oc = v3sub(r.orig, center);
   double a = v3dot(r.dir, r.dir);
-  double b = 2.0 * v3dot(oc, r.dir);
+  double halfb = v3dot(oc, r.dir);
   double c = v3dot(oc, oc) - radius * radius;
-  double discriminant = b * b - 4 * a * c;
+  double discriminant = halfb * halfb - a * c;
 
   if (discriminant < 0)
     return -1;
   else
-    return (-b - sqrt(discriminant)) / (2.0 * a);
+    return (-halfb - sqrt(discriminant)) / a;
 }
 
 vec3 raycolor(ray r) {
