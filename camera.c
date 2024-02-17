@@ -105,7 +105,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
 
   if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
     r.orig = rec.p;
-    r.dir = randomonhemisphere(rec.normal);
+    r.dir = v3add(rec.normal, v3randomunit());
     return v3scale(raycolor(r, depth - 1, world), 0.5);
   } else {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
