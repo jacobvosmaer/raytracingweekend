@@ -112,4 +112,5 @@ int main(void) {
       writecolor(stdout, pixelcolor);
     }
   }
+  return 0;
 }
