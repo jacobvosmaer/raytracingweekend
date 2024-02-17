@@ -49,6 +49,40 @@ typedef struct {
 
 vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 
+typedef struct {
+  vec3 center;
+  double radius;
+} sphere;
+
+typedef struct {
+  vec3 p, normal;
+  double t;
+} hitrecord;
+
+int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
+  vec3 oc = v3sub(r.orig, sp.center);
+  double a = v3dot(r.dir, r.dir);
+  double halfb = v3dot(oc, r.dir);
+  double c = v3dot(oc, oc) - sp.radius * sp.radius;
+  double discriminant = halfb * halfb - a * c;
+  double sqrtd, root;
+
+  if (discriminant < 0)
+    return 0;
+  sqrtd = sqrt(discriminant);
+  root = (-halfb - sqrtd) / a;
+  if (root <= tmin || root >= tmax) {
+    root = (-halfb + sqrtd) / a;
+    if (root <= tmin || root >= tmax)
+      return 0;
+  }
+
+  rec->t = root;
+  rec->p = rayat(r, rec->t);
+  rec->normal = v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius);
+  return 1;
+}
+
 double hitsphere(vec3 center, double radius, ray r) {
   vec3 oc = v3sub(r.orig, center);
   double a = v3dot(r.dir, r.dir);
