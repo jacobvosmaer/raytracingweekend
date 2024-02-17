@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
+
 vec3 v3(double x, double y, double z) {
   vec3 v;
   v.x = x;
@@ -25,6 +27,11 @@ vec3 v3sub(vec3 v, vec3 w) {
   return v;
 }
 
+vec3 v3neg(vec3 v) {
+  vec3 zero = {0};
+  return v3sub(zero, v);
+}
+
 vec3 v3scale(vec3 v, double c) {
   v.x *= c;
   v.y *= c;
@@ -35,6 +42,22 @@ vec3 v3scale(vec3 v, double c) {
 double v3length(vec3 v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
 double v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
+
+vec3 v3random(void) {
+  return v3(randomdouble(), randomdouble(), randomdouble());
+}
+
+vec3 v3randominterval(double min, double max) {
+  return v3add(v3(min, min, min), v3scale(v3random(), max - min));
+}
+
+vec3 v3randomunit(void) {
+  vec3 v;
+  do
+    v = v3randominterval(-1, 1);
+  while (v3dot(v, v) >= 1);
+  return v3unit(v);
+}
 
 vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 

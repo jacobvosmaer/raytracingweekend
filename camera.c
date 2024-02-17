@@ -29,8 +29,6 @@ double intervalclamp(struct interval iv, double x) {
     return x;
 }
 
-double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
-
 void writecolor(FILE *out, vec3 color, int nsamples) {
   struct interval intensity = interval(0, 0.999);
   color = v3scale(color, 1.0 / nsamples);
@@ -47,9 +45,8 @@ typedef struct {
 
 /* outwardnormal must be unit vector */
 void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
-  vec3 zero = {0};
   rec->frontface = v3dot(r.dir, outwardnormal) < 0;
-  rec->normal = rec->frontface ? outwardnormal : v3sub(zero, outwardnormal);
+  rec->normal = rec->frontface ? outwardnormal : v3neg(outwardnormal);
 }
 
 int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
@@ -90,14 +87,25 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   return !!nhit;
 }
 
+vec3 randomonhemisphere(vec3 normal) {
+  vec3 v = v3randomunit();
+  if (v3dot(v, normal) > 0.0)
+    return v;
+  else
+    return v3neg(v);
+}
+
 vec3 raycolor(ray r, spherelist *world) {
   vec3 dir = v3unit(r.dir);
   double a = 0.5 * (dir.y + 1.0);
   hitrecord rec;
-  if (spherelisthit(world, r, interval(0, INFINITY), &rec))
-    return v3scale(v3add(rec.normal, v3(1, 1, 1)), 0.5);
-  else
+  if (spherelisthit(world, r, interval(0, INFINITY), &rec)) {
+    r.orig = rec.p;
+    r.dir = randomonhemisphere(rec.normal);
+    return v3scale(raycolor(r, world), 0.5);
+  } else {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
+  }
 }
 
 vec3 pixelsamplesquare(camera *c) {
