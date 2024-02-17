@@ -130,19 +130,6 @@ int spherelisthit(spherelist *sl, ray r, double tmin, double tmax,
   return !!nhit;
 }
 
-double hitsphere(vec3 center, double radius, ray r) {
-  vec3 oc = v3sub(r.orig, center);
-  double a = v3dot(r.dir, r.dir);
-  double halfb = v3dot(oc, r.dir);
-  double c = v3dot(oc, oc) - radius * radius;
-  double discriminant = halfb * halfb - a * c;
-
-  if (discriminant < 0)
-    return -1;
-  else
-    return (-halfb - sqrt(discriminant)) / a;
-}
-
 vec3 raycolor(ray r, spherelist *world) {
   vec3 dir = v3unit(r.dir);
   double a = 0.5 * (dir.y + 1.0);
