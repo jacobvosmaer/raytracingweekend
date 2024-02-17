@@ -103,7 +103,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
   if (depth <= 0)
     return v3(0, 0, 0);
 
-  if (spherelisthit(world, r, interval(0, INFINITY), &rec)) {
+  if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
     r.orig = rec.p;
     r.dir = randomonhemisphere(rec.normal);
     return v3scale(raycolor(r, depth - 1, world), 0.5);
