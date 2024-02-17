@@ -4,6 +4,21 @@
 #include <math.h>
 #include <stdio.h>
 
+struct interval {
+  double min, max;
+};
+
+struct interval interval(double min, double max) {
+  struct interval iv;
+  iv.min = min;
+  iv.max = max;
+  return iv;
+}
+
+int intervalsurrounds(struct interval iv, double x) {
+  return x > iv.min && x < iv.max;
+}
+
 void writecolor(FILE *out, vec3 color) {
   color = v3scale(color, 255.999);
   fprintf(out, "%d %d %d\n", (int)(color.x), (int)(color.y), (int)(color.z));
@@ -21,8 +36,7 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->normal = rec->frontface ? outwardnormal : v3scale(outwardnormal, -1);
 }
 
-int spherehit(struct sphere sp, ray r, double tmin, double tmax,
-              hitrecord *rec) {
+int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   vec3 oc = v3sub(r.orig, sp.center);
   double a = v3dot(r.dir, r.dir);
   double halfb = v3dot(oc, r.dir);
@@ -34,9 +48,9 @@ int spherehit(struct sphere sp, ray r, double tmin, double tmax,
     return 0;
   sqrtd = sqrt(discriminant);
   root = (-halfb - sqrtd) / a;
-  if (root <= tmin || root >= tmax) {
+  if (!intervalsurrounds(t, root)) {
     root = (-halfb + sqrtd) / a;
-    if (root <= tmin || root >= tmax)
+    if (!intervalsurrounds(t, root))
       return 0;
   }
 
@@ -47,13 +61,12 @@ int spherehit(struct sphere sp, ray r, double tmin, double tmax,
   return 1;
 }
 
-int spherelisthit(spherelist *sl, ray r, double tmin, double tmax,
-                  hitrecord *rec) {
+int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int i, nhit = 0;
-  double closest = tmax;
+  double closest = t.max;
 
   for (i = 0; i < sl->n; i++) {
-    if (spherehit(sl->spheres[i], r, tmin, closest, rec)) {
+    if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
       nhit++;
       closest = rec->t;
     }
@@ -65,7 +78,7 @@ vec3 raycolor(ray r, spherelist *world) {
   vec3 dir = v3unit(r.dir);
   double a = 0.5 * (dir.y + 1.0);
   hitrecord rec;
-  if (spherelisthit(world, r, 0, INFINITY, &rec))
+  if (spherelisthit(world, r, interval(0, INFINITY), &rec))
     return v3scale(v3add(rec.normal, v3(1, 1, 1)), 0.5);
   else
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
