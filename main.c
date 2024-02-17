@@ -1,5 +1,10 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#define assert(x)                                                              \
+  if (!(x))                                                                    \
+  __builtin_trap()
 
 typedef struct {
   double x, y, z;
@@ -89,6 +94,33 @@ int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
   return 1;
+}
+
+typedef struct {
+  sphere *spheres;
+  int n, max;
+} spherelist;
+
+void spherelistadd(spherelist *sl, sphere sp) {
+  if (sl->n == sl->max) {
+    sl->max = sl->max ? 2 * sl->max : 1;
+    assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
+  }
+  sl->spheres[sl->n++] = sp;
+}
+
+int spherelisthit(spherelist *sl, ray r, double tmin, double tmax,
+                  hitrecord *rec) {
+  int i, nhit = 0;
+  double closest = tmax;
+
+  for (i = 0; i < sl->n; i++) {
+    if (spherehit(sl->spheres[i], r, tmin, closest, rec)) {
+      nhit++;
+      closest = rec->t;
+    }
+  }
+  return !!nhit;
 }
 
 double hitsphere(vec3 center, double radius, ray r) {
