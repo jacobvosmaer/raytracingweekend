@@ -1,23 +1,39 @@
-#ifndef VEC3_H
-#define VEC3_H
+#ifndef SHARED_H
+#define SHARED_H
 
 #define assert(x)                                                              \
   if (!(x))                                                                    \
   __builtin_trap()
 
-double randomdouble(void);
-
 struct interval {
   double min, max;
 };
+
+typedef struct {
+  double x, y, z;
+} vec3;
+
+typedef struct {
+  vec3 orig, dir;
+} ray;
+
+struct sphere {
+  vec3 center;
+  double radius;
+};
+ 
+
+typedef struct {
+  struct sphere *spheres;
+  int n, max;
+} spherelist;
+
+double randomdouble(void);
 
 struct interval interval(double min, double max);
 int intervalsurrounds(struct interval iv, double x);
 double intervalclamp(struct interval iv, double x);
 
-typedef struct {
-  double x, y, z;
-} vec3;
 vec3 v3(double x, double y, double z);
 vec3 v3add(vec3 v, vec3 w);
 vec3 v3sub(vec3 v, vec3 w);
@@ -31,22 +47,11 @@ vec3 v3randominterval(double min, double max);
 vec3 v3randomunit(void);
 vec3 v3clamp(vec3 v, struct interval iv);
 
-typedef struct {
-  vec3 orig, dir;
-} ray;
 vec3 rayat(ray r, double t);
 ray rayfromto(vec3 from, vec3 to);
 
-struct sphere {
-  vec3 center;
-  double radius;
-};
 struct sphere sphere(vec3 center, double radius);
 
-typedef struct {
-  struct sphere *spheres;
-  int n, max;
-} spherelist;
 void spherelistadd(spherelist *sl, struct sphere sp);
 
 #endif
