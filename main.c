@@ -37,9 +37,8 @@ vec3 v3scale(vec3 v, double c) {
 double v3length(vec3 v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
 
 void writecolor(FILE *out, vec3 color) {
-  double s = 255.999;
-  fprintf(out, "%d %d %d\n", (int)(s * color.x), (int)(s * color.y),
-          (int)(s * color.z));
+  color = v3scale(color, 255.999);
+  fprintf(out, "%d %d %d\n", (int)(color.x), (int)(color.y), (int)(color.z));
 }
 
 typedef struct {
