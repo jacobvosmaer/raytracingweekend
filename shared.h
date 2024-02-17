@@ -17,12 +17,11 @@ typedef struct {
   vec3 orig, dir;
 } ray;
 
-typedef struct hitrecord hitrecord;
+enum material { LAMBERTIAN, METAL };
 
-typedef struct material {
-  int (*scatter)(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered,
-                 void *userdata);
-  void *userdata;
+typedef struct {
+  int type;
+  vec3 albedo;
 } material;
 
 struct sphere {
@@ -36,12 +35,12 @@ typedef struct {
   int n, max;
 } spherelist;
 
-struct hitrecord {
+typedef struct {
   vec3 p, normal;
   double t;
   int frontface;
   material mat;
-};
+} hitrecord;
 
 double randomdouble(void);
 
@@ -70,8 +69,5 @@ ray rayfromto(vec3 from, vec3 to);
 struct sphere sphere(vec3 center, double radius, material mat);
 
 void spherelistadd(spherelist *sl, struct sphere sp);
-
-material lambertian(vec3 albedo);
-material metal(vec3 albedo);
 
 #endif

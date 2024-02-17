@@ -67,6 +67,28 @@ vec3 randomonhemisphere(vec3 normal) {
     return v3neg(v);
 }
 
+vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
+
+int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
+            ray *scattered) {
+  if (mat.type == LAMBERTIAN) {
+    vec3 scatterdirection = v3add(rec->normal, v3randomunit());
+    if (v3nearzero(scatterdirection))
+      scatterdirection = rec->normal;
+    scattered->orig = rec->p;
+    scattered->dir = scatterdirection;
+    *attenuation = mat.albedo;
+    return 1;
+  } else if (mat.type == METAL) {
+    scattered->orig = rec->p;
+    scattered->dir = reflect(v3unit(in.dir), rec->normal);
+    *attenuation = mat.albedo;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 vec3 raycolor(ray r, int depth, spherelist *world) {
   vec3 dir = v3unit(r.dir), black = {0};
   double a = 0.5 * (dir.y + 1.0);
@@ -78,7 +100,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
   if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
     ray scattered;
     vec3 attenuation;
-    if (rec.mat.scatter(r, &rec, &attenuation, &scattered, rec.mat.userdata))
+    if (scatter(rec.mat, r, &rec, &attenuation, &scattered))
       return v3mul(attenuation, raycolor(scattered, depth - 1, world));
     return black;
   } else {

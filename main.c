@@ -1,6 +1,20 @@
 #include "camera.h"
 #include "shared.h"
 
+material lambertian(vec3 albedo) {
+  material mat;
+  mat.type = LAMBERTIAN;
+  mat.albedo = albedo;
+  return mat;
+}
+
+material metal(vec3 albedo) {
+  material mat;
+  mat.type = METAL;
+  mat.albedo = albedo;
+  return mat;
+}
+
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
