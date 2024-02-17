@@ -93,10 +93,11 @@ ray rayfromto(vec3 from, vec3 to) {
   return r;
 }
 
-struct sphere sphere(vec3 center, double radius) {
+struct sphere sphere(vec3 center, double radius, material mat) {
   struct sphere sp;
   sp.center = center;
   sp.radius = radius;
+  sp.mat = mat;
   return sp;
 }
 

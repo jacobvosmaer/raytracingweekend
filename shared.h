@@ -17,16 +17,31 @@ typedef struct {
   vec3 orig, dir;
 } ray;
 
+typedef struct hitrecord hitrecord;
+
+typedef struct material {
+  int (*scatter)(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered,
+                 void *userdata);
+  void *userdata;
+} material;
+
 struct sphere {
   vec3 center;
   double radius;
+  material mat;
 };
- 
 
 typedef struct {
   struct sphere *spheres;
   int n, max;
 } spherelist;
+
+struct hitrecord {
+  vec3 p, normal;
+  double t;
+  int frontface;
+  material mat;
+};
 
 double randomdouble(void);
 
@@ -50,7 +65,7 @@ vec3 v3clamp(vec3 v, struct interval iv);
 vec3 rayat(ray r, double t);
 ray rayfromto(vec3 from, vec3 to);
 
-struct sphere sphere(vec3 center, double radius);
+struct sphere sphere(vec3 center, double radius, material mat);
 
 void spherelistadd(spherelist *sl, struct sphere sp);
 

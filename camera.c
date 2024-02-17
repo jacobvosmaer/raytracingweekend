@@ -14,12 +14,6 @@ void writecolor(FILE *out, vec3 color, int nsamples) {
           (int)(256 * color.z));
 }
 
-typedef struct {
-  vec3 p, normal;
-  double t;
-  int frontface;
-} hitrecord;
-
 /* outwardnormal must be unit vector */
 void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->frontface = v3dot(r.dir, outwardnormal) < 0;
