@@ -9,8 +9,6 @@ void writecolor(FILE *out, vec3 color) {
   fprintf(out, "%d %d %d\n", (int)(color.x), (int)(color.y), (int)(color.z));
 }
 
-vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
-
 typedef struct {
   vec3 p, normal;
   double t;
@@ -71,14 +69,6 @@ vec3 raycolor(ray r, spherelist *world) {
     return v3scale(v3add(rec.normal, v3(1, 1, 1)), 0.5);
   else
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
-}
-
-ray rayfromto(vec3 from, vec3 to) {
-  ray r;
-  to = v3sub(to, from);
-  r.orig = from;
-  r.dir = to;
-  return r;
 }
 
 void initialize(camera *c) {
