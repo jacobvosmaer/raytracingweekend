@@ -11,6 +11,7 @@ int main(void) {
   cam.aspectratio = 16.0 / 9.0;
   cam.imagewidth = 400;
   cam.samplesperpixel = 100;
+  cam.maxdepth = 50;
   camerarender(&cam, &world);
 
   return 0;

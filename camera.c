@@ -95,14 +95,18 @@ vec3 randomonhemisphere(vec3 normal) {
     return v3neg(v);
 }
 
-vec3 raycolor(ray r, spherelist *world) {
+vec3 raycolor(ray r, int depth, spherelist *world) {
   vec3 dir = v3unit(r.dir);
   double a = 0.5 * (dir.y + 1.0);
   hitrecord rec;
+
+  if (depth <= 0)
+    return v3(0, 0, 0);
+
   if (spherelisthit(world, r, interval(0, INFINITY), &rec)) {
     r.orig = rec.p;
     r.dir = randomonhemisphere(rec.normal);
-    return v3scale(raycolor(r, world), 0.5);
+    return v3scale(raycolor(r, depth - 1, world), 0.5);
   } else {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
   }
@@ -151,7 +155,8 @@ void camerarender(camera *c, spherelist *world) {
       vec3 pixelcolor = {0};
       int k;
       for (k = 0; k < c->samplesperpixel; k++)
-        pixelcolor = v3add(pixelcolor, raycolor(getray(c, i, j), world));
+        pixelcolor =
+            v3add(pixelcolor, raycolor(getray(c, i, j), c->maxdepth, world));
       writecolor(stdout, pixelcolor, c->samplesperpixel);
     }
   }
