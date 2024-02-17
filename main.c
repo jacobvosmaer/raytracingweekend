@@ -54,13 +54,13 @@ typedef struct {
 
 vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 
-typedef struct {
+struct sphere {
   vec3 center;
   double radius;
-} sphere;
+};
 
-sphere sphereval(vec3 center, double radius) {
-  sphere sp;
+struct sphere sphere(vec3 center, double radius) {
+  struct sphere sp;
   sp.center = center;
   sp.radius = radius;
   return sp;
@@ -78,7 +78,8 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->normal = rec->frontface ? outwardnormal : v3scale(outwardnormal, -1);
 }
 
-int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
+int spherehit(struct sphere sp, ray r, double tmin, double tmax,
+              hitrecord *rec) {
   vec3 oc = v3sub(r.orig, sp.center);
   double a = v3dot(r.dir, r.dir);
   double halfb = v3dot(oc, r.dir);
@@ -104,11 +105,11 @@ int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
 }
 
 typedef struct {
-  sphere *spheres;
+  struct sphere *spheres;
   int n, max;
 } spherelist;
 
-void spherelistadd(spherelist *sl, sphere sp) {
+void spherelistadd(spherelist *sl, struct sphere sp) {
   if (sl->n == sl->max) {
     sl->max = sl->max ? 2 * sl->max : 1;
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
@@ -156,8 +157,8 @@ int main(void) {
        viewportupperleft, pixel00loc;
   spherelist world = {0};
 
-  spherelistadd(&world, sphereval(v3(0, 0, -1), 0.5));
-  spherelistadd(&world, sphereval(v3(0, -100.5, -1), 100));
+  spherelistadd(&world, sphere(v3(0, 0, -1), 0.5));
+  spherelistadd(&world, sphere(v3(0, -100.5, -1), 100));
 
   if (imageheight < 1)
     imageheight = 1;
