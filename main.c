@@ -22,7 +22,15 @@ enum material { LAMBERTIAN, METAL };
 
 typedef struct {
   enum material type;
-  vec3 albedo;
+  union {
+    struct lambertian {
+      vec3 albedo;
+    } lambertian;
+    struct metal {
+      vec3 albedo;
+      double fuzz;
+    } metal;
+  } data;
 } material;
 
 struct sphere {
@@ -48,14 +56,15 @@ double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
 material lambertian(vec3 albedo) {
   material mat;
   mat.type = LAMBERTIAN;
-  mat.albedo = albedo;
+  mat.data.lambertian.albedo = albedo;
   return mat;
 }
 
-material metal(vec3 albedo) {
+material metal(vec3 albedo, double fuzz) {
   material mat;
   mat.type = METAL;
-  mat.albedo = albedo;
+  mat.data.metal.albedo = albedo;
+  mat.data.metal.fuzz = fuzz > 1 ? 1 : fuzz;
   return mat;
 }
 
@@ -242,17 +251,20 @@ vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
 int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
             ray *scattered) {
   if (mat.type == LAMBERTIAN) {
+    struct lambertian data = mat.data.lambertian;
     vec3 scatterdirection = v3add(rec->normal, v3randomunit());
     if (v3nearzero(scatterdirection))
       scatterdirection = rec->normal;
     scattered->orig = rec->p;
     scattered->dir = scatterdirection;
-    *attenuation = mat.albedo;
+    *attenuation = data.albedo;
     return 1;
   } else if (mat.type == METAL) {
+    struct metal data = mat.data.metal;
+    vec3 reflected = reflect(v3unit(in.dir), rec->normal);
     scattered->orig = rec->p;
-    scattered->dir = reflect(v3unit(in.dir), rec->normal);
-    *attenuation = mat.albedo;
+    scattered->dir = v3add(reflected, v3scale(v3randomunit(), data.fuzz));
+    *attenuation = data.albedo;
     return 1;
   } else {
     return 0;
@@ -346,8 +358,8 @@ int main(void) {
   spherelist world = {0};
   material matground = lambertian(v3(0.8, 0.8, 0)),
            matcenter = lambertian(v3(0.7, 0.3, 0.3)),
-           matleft = metal(v3(0.8, 0.8, 0.8)),
-           matright = metal(v3(0.8, 0.6, 0.2));
+           matleft = metal(v3(0.8, 0.8, 0.8), 0.3),
+           matright = metal(v3(0.8, 0.6, 0.2), 1.0);
 
   spherelistadd(&world, sphere(v3(0, -100.5, -1), 100, matground));
   spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
