@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 struct interval {
   double min, max;
@@ -19,9 +20,23 @@ int intervalsurrounds(struct interval iv, double x) {
   return x > iv.min && x < iv.max;
 }
 
-void writecolor(FILE *out, vec3 color) {
-  color = v3scale(color, 255.999);
-  fprintf(out, "%d %d %d\n", (int)(color.x), (int)(color.y), (int)(color.z));
+double intervalclamp(struct interval iv, double x) {
+  if (x < iv.min)
+    return iv.min;
+  else if (x > iv.max)
+    return iv.max;
+  else
+    return x;
+}
+
+double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
+
+void writecolor(FILE *out, vec3 color, int nsamples) {
+  struct interval intensity = interval(0, 0.999);
+  color = v3scale(color, 1.0 / nsamples);
+  fprintf(out, "%d %d %d\n", (int)(256 * intervalclamp(intensity, color.x)),
+          (int)(256 * intervalclamp(intensity, color.y)),
+          (int)(256 * intervalclamp(intensity, color.z)));
 }
 
 typedef struct {
@@ -84,6 +99,18 @@ vec3 raycolor(ray r, spherelist *world) {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
 }
 
+vec3 pixelsamplesquare(camera *c) {
+  double px = -0.5 + randomdouble(), py = -0.5 + randomdouble();
+  return v3add(v3scale(c->pixeldu, px), v3scale(c->pixeldv, py));
+}
+
+ray getray(camera *c, int i, int j) {
+  vec3 pixelcenter = v3add(v3add(c->pixel00loc, v3scale(c->pixeldu, i)),
+                           v3scale(c->pixeldv, j)),
+       pixelsample = v3add(pixelcenter, pixelsamplesquare(c));
+  return rayfromto(c->center, pixelsample);
+}
+
 void initialize(camera *c) {
   double focallength = 1, viewportheight = 2, viewportwidth;
   vec3 viewportu, viewportv, viewportupperleft;
@@ -112,10 +139,11 @@ void camerarender(camera *c, spherelist *world) {
 
   for (j = 0; j < c->imageheight; j++) {
     for (i = 0; i < c->imagewidth; i++) {
-      vec3 pixelcenter = v3add(v3add(c->pixel00loc, v3scale(c->pixeldu, i)),
-                               v3scale(c->pixeldv, j));
-      ray r = rayfromto(c->center, pixelcenter);
-      writecolor(stdout, raycolor(r, world));
+      vec3 pixelcolor = {0};
+      int k;
+      for (k = 0; k < c->samplesperpixel; k++)
+        pixelcolor = v3add(pixelcolor, raycolor(getray(c, i, j), world));
+      writecolor(stdout, pixelcolor, c->samplesperpixel);
     }
   }
 }
