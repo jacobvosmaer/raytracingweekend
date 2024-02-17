@@ -59,6 +59,13 @@ typedef struct {
   double radius;
 } sphere;
 
+sphere sphereval(vec3 center, double radius) {
+  sphere sp;
+  sp.center = center;
+  sp.radius = radius;
+  return sp;
+}
+
 typedef struct {
   vec3 p, normal;
   double t;
@@ -136,16 +143,14 @@ double hitsphere(vec3 center, double radius, ray r) {
     return (-halfb - sqrt(discriminant)) / a;
 }
 
-vec3 raycolor(ray r) {
-  vec3 dir = v3unit(r.dir), spherecenter = v3(0, 0, -1);
+vec3 raycolor(ray r, spherelist *world) {
+  vec3 dir = v3unit(r.dir);
   double a = 0.5 * (dir.y + 1.0);
-  double t = hitsphere(spherecenter, 0.5, r);
-  if (t > 0) {
-    vec3 N = v3unit(v3sub(rayat(r, t), spherecenter));
-    return v3scale(v3add(N, v3(1, 1, 1)), 0.5);
-  } else {
+  hitrecord rec;
+  if (spherelisthit(world, r, 0, INFINITY, &rec))
+    return v3scale(v3add(rec.normal, v3(1, 1, 1)), 0.5);
+  else
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
-  }
 }
 
 ray rayfromto(vec3 from, vec3 to) {
@@ -162,6 +167,10 @@ int main(void) {
   int imagewidth = 2048, imageheight = imagewidth / aspectratio, i, j;
   vec3 cameracenter = {0}, viewportu, viewportv, pixeldu, pixeldv,
        viewportupperleft, pixel00loc;
+  spherelist world = {0};
+
+  spherelistadd(&world, sphereval(v3(0, 0, -1), 0.5));
+  spherelistadd(&world, sphereval(v3(0, -100.5, -1), 100));
 
   if (imageheight < 1)
     imageheight = 1;
@@ -182,7 +191,7 @@ int main(void) {
       vec3 pixelcenter =
           v3add(v3add(pixel00loc, v3scale(pixeldu, i)), v3scale(pixeldv, j));
       ray r = rayfromto(cameracenter, pixelcenter);
-      vec3 pixelcolor = raycolor(r);
+      vec3 pixelcolor = raycolor(r, &world);
       writecolor(stdout, pixelcolor);
     }
   }
