@@ -84,6 +84,11 @@ vec3 v3clamp(vec3 v, struct interval iv) {
             intervalclamp(iv, v.z));
 }
 
+int v3nearzero(vec3 v) {
+  double s = 1e-8;
+  return fabs(v.x) < s && fabs(v.y) < s && fabs(v.z) < s;
+}
+
 vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }
 
 ray rayfromto(vec3 from, vec3 to) {
@@ -107,4 +112,23 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
   }
   sl->spheres[sl->n++] = sp;
+}
+
+int lambertianscatter(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered,
+                      void *userdata) {
+  vec3 scatterdirection = v3add(rec->normal, v3randomunit());
+  if (v3nearzero(scatterdirection))
+    scatterdirection = rec->normal;
+  scattered->orig = rec->p;
+  scattered->dir = scatterdirection;
+  *attenuation = *(vec3 *)userdata;
+  return 1;
+}
+
+material lambertian(vec3 albedo) {
+  material mat;
+  mat.scatter = lambertianscatter;
+  assert(mat.userdata = malloc(sizeof(vec3)));
+  *((vec3 *)mat.userdata) = albedo;
+  return mat;
 }

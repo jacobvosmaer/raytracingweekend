@@ -61,6 +61,7 @@ vec3 v3random(void);
 vec3 v3randominterval(double min, double max);
 vec3 v3randomunit(void);
 vec3 v3clamp(vec3 v, struct interval iv);
+int v3nearzero(vec3 v);
 
 vec3 rayat(ray r, double t);
 ray rayfromto(vec3 from, vec3 to);
@@ -68,5 +69,7 @@ ray rayfromto(vec3 from, vec3 to);
 struct sphere sphere(vec3 center, double radius, material mat);
 
 void spherelistadd(spherelist *sl, struct sphere sp);
+
+material lambertian(vec3 albedo);
 
 #endif
