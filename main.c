@@ -85,7 +85,7 @@ ray rayfromto(vec3 from, vec3 to) {
 int main(void) {
   double aspectratio = 16.0 / 9.0, focallength = 1, viewportheight = 2,
          viewportwidth;
-  int imagewidth = 256, imageheight = imagewidth / aspectratio, i, j;
+  int imagewidth = 2048, imageheight = imagewidth / aspectratio, i, j;
   vec3 cameracenter = {0}, viewportu, viewportv, pixeldu, pixeldv,
        viewportupperleft, pixel00loc;
 
