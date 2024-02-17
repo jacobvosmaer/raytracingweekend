@@ -42,6 +42,7 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
+rec->mat=sp.mat;
   return 1;
 }
 
@@ -67,17 +68,19 @@ vec3 randomonhemisphere(vec3 normal) {
 }
 
 vec3 raycolor(ray r, int depth, spherelist *world) {
-  vec3 dir = v3unit(r.dir);
+  vec3 dir = v3unit(r.dir), black = {0};
   double a = 0.5 * (dir.y + 1.0);
   hitrecord rec;
 
   if (depth <= 0)
-    return v3(0, 0, 0);
+    return black;
 
   if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
-    r.orig = rec.p;
-    r.dir = v3add(rec.normal, v3randomunit());
-    return v3scale(raycolor(r, depth - 1, world), 0.5);
+    ray scattered;
+    vec3 attenuation;
+    if (rec.mat.scatter(r, &rec, &attenuation, &scattered, rec.mat.userdata))
+      return v3mul(attenuation, raycolor(scattered, depth - 1, world));
+    return black;
   } else {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
   }

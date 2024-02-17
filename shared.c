@@ -52,6 +52,13 @@ vec3 v3neg(vec3 v) {
   return v3sub(zero, v);
 }
 
+vec3 v3mul(vec3 v, vec3 w) {
+  v.x *= w.x;
+  v.y *= w.y;
+  v.z *= w.z;
+  return v;
+}
+
 vec3 v3scale(vec3 v, double c) {
   v.x *= c;
   v.y *= c;
@@ -128,6 +135,24 @@ int lambertianscatter(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered,
 material lambertian(vec3 albedo) {
   material mat;
   mat.scatter = lambertianscatter;
+  assert(mat.userdata = malloc(sizeof(vec3)));
+  *((vec3 *)mat.userdata) = albedo;
+  return mat;
+}
+
+vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
+
+int metalscatter(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered,
+                 void *userdata) {
+  scattered->orig = rec->p;
+  scattered->dir = reflect(v3unit(in.dir), rec->normal);
+  *attenuation = *(vec3 *)userdata;
+  return 1;
+}
+
+material metal(vec3 albedo) {
+  material mat;
+  mat.scatter = metalscatter;
   assert(mat.userdata = malloc(sizeof(vec3)));
   *((vec3 *)mat.userdata) = albedo;
   return mat;
