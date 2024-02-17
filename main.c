@@ -57,7 +57,14 @@ typedef struct {
 typedef struct {
   vec3 p, normal;
   double t;
+  int frontface;
 } hitrecord;
+
+/* outwardnormal must be unit vector */
+void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
+  rec->frontface = v3dot(r.dir, outwardnormal) < 0;
+  rec->normal = rec->frontface ? outwardnormal : v3scale(outwardnormal, -1);
+}
 
 int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
   vec3 oc = v3sub(r.orig, sp.center);
@@ -79,7 +86,8 @@ int spherehit(sphere sp, ray r, double tmin, double tmax, hitrecord *rec) {
 
   rec->t = root;
   rec->p = rayat(r, rec->t);
-  rec->normal = v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius);
+  hitrecordsetnormal(rec, r,
+                     v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
   return 1;
 }
 
