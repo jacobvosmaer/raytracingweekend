@@ -63,11 +63,11 @@ double hitsphere(vec3 center, double radius, ray r) {
 }
 
 vec3 raycolor(ray r) {
-  vec3 dir = v3unit(r.dir);
+  vec3 dir = v3unit(r.dir), spherecenter = v3(0, 0, -1);
   double a = 0.5 * (dir.y + 1.0);
-  double t = hitsphere(v3(0, 0, -1), 0.5, r);
+  double t = hitsphere(spherecenter, 0.5, r);
   if (t > 0) {
-    vec3 N = v3unit(v3sub(rayat(r, t), v3(0, 0, -1)));
+    vec3 N = v3unit(v3sub(rayat(r, t), spherecenter));
     return v3scale(v3add(N, v3(1, 1, 1)), 0.5);
   } else {
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
