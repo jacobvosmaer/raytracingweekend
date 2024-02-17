@@ -42,7 +42,7 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
-rec->mat=sp.mat;
+  rec->mat = sp.mat;
   return 1;
 }
 
