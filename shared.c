@@ -5,6 +5,26 @@
 
 double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
 
+struct interval interval(double min, double max) {
+  struct interval iv;
+  iv.min = min;
+  iv.max = max;
+  return iv;
+}
+
+int intervalsurrounds(struct interval iv, double x) {
+  return x > iv.min && x < iv.max;
+}
+
+double intervalclamp(struct interval iv, double x) {
+  if (x < iv.min)
+    return iv.min;
+  else if (x > iv.max)
+    return iv.max;
+  else
+    return x;
+}
+
 vec3 v3(double x, double y, double z) {
   vec3 v;
   v.x = x;
@@ -57,6 +77,11 @@ vec3 v3randomunit(void) {
     v = v3randominterval(-1, 1);
   while (v3dot(v, v) >= 1);
   return v3unit(v);
+}
+
+vec3 v3clamp(vec3 v, struct interval iv) {
+  return v3(intervalclamp(iv, v.x), intervalclamp(iv, v.y),
+            intervalclamp(iv, v.z));
 }
 
 vec3 rayat(ray r, double t) { return v3add(r.orig, v3scale(r.dir, t)); }

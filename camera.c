@@ -5,37 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct interval {
-  double min, max;
-};
-
-struct interval interval(double min, double max) {
-  struct interval iv;
-  iv.min = min;
-  iv.max = max;
-  return iv;
-}
-
-int intervalsurrounds(struct interval iv, double x) {
-  return x > iv.min && x < iv.max;
-}
-
-double intervalclamp(struct interval iv, double x) {
-  if (x < iv.min)
-    return iv.min;
-  else if (x > iv.max)
-    return iv.max;
-  else
-    return x;
-}
-
 void writecolor(FILE *out, vec3 color, int nsamples) {
-  struct interval intensity = interval(0, 0.999);
   color = v3scale(color, 1.0 / nsamples);
-  color = v3(sqrt(color.x), sqrt(color.y), sqrt(color.z));
-  fprintf(out, "%d %d %d\n", (int)(256 * intervalclamp(intensity, color.x)),
-          (int)(256 * intervalclamp(intensity, color.y)),
-          (int)(256 * intervalclamp(intensity, color.z)));
+  /* Use sqrt as gamma correction */
+  color = v3clamp(v3(sqrt(color.x), sqrt(color.y), sqrt(color.z)),
+                  interval(0, 0.999));
+  fprintf(out, "%d %d %d\n", (int)(256 * color.x), (int)(256 * color.y),
+          (int)(256 * color.z));
 }
 
 typedef struct {

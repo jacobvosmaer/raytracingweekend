@@ -7,6 +7,14 @@
 
 double randomdouble(void);
 
+struct interval {
+  double min, max;
+};
+
+struct interval interval(double min, double max);
+int intervalsurrounds(struct interval iv, double x);
+double intervalclamp(struct interval iv, double x);
+
 typedef struct {
   double x, y, z;
 } vec3;
@@ -21,6 +29,7 @@ vec3 v3unit(vec3 v);
 vec3 v3random(void);
 vec3 v3randominterval(double min, double max);
 vec3 v3randomunit(void);
+vec3 v3clamp(vec3 v, struct interval iv);
 
 typedef struct {
   vec3 orig, dir;
