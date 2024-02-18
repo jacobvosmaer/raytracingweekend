@@ -444,28 +444,45 @@ void camerarender(camera *c, spherelist *world) {
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  material matground = lambertian(v3(0.8, 0.8, 0)),
-           matcenter = lambertian(v3(0.1, 0.2, 0.5)), matleft = dielectric(1.5),
-           matright = metal(v3(0.8, 0.6, 0.2), 0);
+  int a, b;
 
-  spherelistadd(&world, sphere(v3(0, -100.5, 1), 100, matground));
-  spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
-  spherelistadd(&world, sphere(v3(-1, 0, -1), 0.5, matleft));
-  spherelistadd(&world, sphere(v3(-1, 0, -1), -0.4, matleft));
-  spherelistadd(&world, sphere(v3(1, 0, -1), 0.5, matright));
+  spherelistadd(&world,
+                sphere(v3(0, -1000, 0), 1000, lambertian(v3(0.5, 0.5, 0.5))));
+
+  for (a = -11; a < 11; a++) {
+    for (b = -11; b < 11; b++) {
+      double choosemat = randomdouble();
+      vec3 center = v3(a + 0.9 * randomdouble(), 0.2, b + 0.9 * randomdouble());
+      material mat;
+
+      if (choosemat < 0.8)
+        mat = lambertian(v3mul(v3random(), v3random()));
+      else if (choosemat < 0.95)
+        mat = metal(v3add(v3(0.5, 0.5, 0.5), v3scale(v3random(), 0.5)),
+                    0.5 * randomdouble());
+      else
+        mat = dielectric(1.5);
+
+      spherelistadd(&world, sphere(center, 0.2, mat));
+    }
+  }
+
+  spherelistadd(&world, sphere(v3(0, 1, 0), 1, dielectric(1.5)));
+  spherelistadd(&world, sphere(v3(-4, 1, 0), 1, lambertian(v3(0.4, 0.2, 0.1))));
+  spherelistadd(&world, sphere(v3(4, 1, 0), 1, metal(v3(0.7, 0.6, 0.5), 0)));
 
   cam.aspectratio = 16.0 / 9.0;
-  cam.imagewidth = 400;
-  cam.samplesperpixel = 100;
+  cam.imagewidth = 1200;
+  cam.samplesperpixel = 500;
   cam.maxdepth = 50;
 
   cam.vfov = 20;
-  cam.lookfrom = v3(-2, 2, 1);
-  cam.lookat = v3(0, 0, -1);
+  cam.lookfrom = v3(13, 2, 3);
+  cam.lookat = v3(0, 0, 0);
   cam.vup = v3(0, 1, 0);
 
-  cam.defocusangle = 10;
-  cam.focusdist = 3.4;
+  cam.defocusangle = 0.6;
+  cam.focusdist = 10;
   camerarender(&cam, &world);
 
   return 0;
