@@ -91,11 +91,11 @@ vec3 v3randominterval(float min, float max) {
 }
 
 vec3 v3randomunit(void) {
-  vec3 v;
-  do
-    v = v3randominterval(-1, 1);
-  while (v3dot(v, v) > 1);
-  return v3unit(v);
+  while (1) {
+    vec3 v = v3randominterval(-1, 1);
+    if (v3dot(v, v) < 1)
+      return v3unit(v);
+  }
 }
 
 vec3 v3randominunitdisk(void) {
