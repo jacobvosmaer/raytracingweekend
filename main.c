@@ -401,6 +401,7 @@ int main(void) {
   spherelistadd(&world, sphere(v3(0, -100.5, -1), 100, matground));
   spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
   spherelistadd(&world, sphere(v3(-1, 0, -1), 0.5, matleft));
+  spherelistadd(&world, sphere(v3(-1, 0, -1), -0.4, matleft));
   spherelistadd(&world, sphere(v3(1, 0, -1), 0.5, matright));
 
   cam.aspectratio = 16.0 / 9.0;
