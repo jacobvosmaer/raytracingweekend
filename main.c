@@ -287,10 +287,14 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
     struct dielectric data = mat.data.dielectric;
     vec3 transparent = {1, 1, 1};
     double refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
-    vec3 refracted = refract(v3unit(in.dir), rec->normal, refractionratio);
+    vec3 unitdirection = v3unit(in.dir);
+    double costheta = fmin(v3dot(v3neg(unitdirection), rec->normal), 1.0),
+           sintheta = sqrt(1.0 - costheta * costheta);
     *attenuation = transparent;
     scattered->orig = rec->p;
-    scattered->dir = refracted;
+    scattered->dir = refractionratio * sintheta > 1.0
+                         ? reflect(unitdirection, rec->normal)
+                         : refract(unitdirection, rec->normal, refractionratio);
     return 1;
   } else {
     return 0;
@@ -382,8 +386,9 @@ void camerarender(camera *c, spherelist *world) {
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  material matground = lambertian(v3(0.8, 0.8, 0)), matcenter = dielectric(1.5),
-           matleft = dielectric(1.5), matright = metal(v3(0.8, 0.6, 0.2), 1.0);
+  material matground = lambertian(v3(0.8, 0.8, 0)),
+           matcenter = lambertian(v3(0.1, 0.2, 0.5)), matleft = dielectric(1.5),
+           matright = metal(v3(0.8, 0.6, 0.2), 0);
 
   spherelistadd(&world, sphere(v3(0, -100.5, -1), 100, matground));
   spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
