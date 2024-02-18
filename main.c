@@ -439,7 +439,9 @@ void camerarender(camera *c, spherelist *world) {
             v3add(pixelcolor, raycolor(getray(c, i, j), c->maxdepth, world));
       writecolor(stdout, pixelcolor, c->samplesperpixel);
     }
+    fputc('.', stderr);
   }
+  fputc('\n', stderr);
 }
 
 int main(void) {
