@@ -248,14 +248,6 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   return !!nhit;
 }
 
-vec3 randomonhemisphere(vec3 normal) {
-  vec3 v = v3randomunit();
-  if (v3dot(v, normal) > 0.0)
-    return v;
-  else
-    return v3neg(v);
-}
-
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
 
 vec3 refract(vec3 uv, vec3 n, double etaioveretat) {
