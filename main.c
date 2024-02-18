@@ -168,13 +168,13 @@ vec3 v3randomunit(void) {
   return v3unit(v);
 }
 
-vec3 v3randomunitdisk(void) {
-  vec3 v;
-  do {
-    v = v3randominterval(-1, 1);
+vec3 v3randominunitdisk(void) {
+  while (1) {
+    vec3 v = v3randominterval(-1, 1);
     v.z = 0;
-  } while (v3dot(v, v) > 1);
-  return v3unit(v);
+    if (v3dot(v, v) < 1)
+      return v;
+  }
 }
 
 vec3 v3clamp(vec3 v, struct interval iv) {
@@ -375,7 +375,7 @@ vec3 pixelsamplesquare(camera *c) {
 }
 
 vec3 defocusdisksample(camera *c) {
-  vec3 p = v3randomunitdisk();
+  vec3 p = v3randominunitdisk();
   return v3add(c->center, v3add(v3scale(c->defocusdisku, p.x),
                                 v3scale(c->defocusdiskv, p.y)));
 }
@@ -483,7 +483,7 @@ int main(void) {
 
   cam.defocusangle = 0.6;
   cam.focusdist = 10;
-  camerarender(&cam, &world);
 
+  camerarender(&cam, &world);
   return 0;
 }
