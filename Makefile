@@ -3,7 +3,7 @@ LDLIBS+=-lm
 OBJS = main
 
 all: main
-
+main: vec3.o
 debug: CFLAGS += -fsanitize=address
 debug: all
 
