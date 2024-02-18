@@ -1,6 +1,11 @@
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifndef NTHREADS
+#define NTHREADS 8
+#endif
 
 #include "vec3.h"
 
@@ -284,6 +289,16 @@ typedef struct {
   int imageheight;
   vec3 center, pixeldu, pixeldv, pixel00loc, u, v, w, defocusdisku,
       defocusdiskv;
+
+  ray *rays;
+  int nrays;
+  pthread_mutex_t raymutex;
+  pthread_cond_t raycond;
+
+  vec3 *colors;
+  int ncolors;
+  pthread_mutex_t colormutex;
+  pthread_cond_t colorcond;
 } camera;
 
 #define CAMERADEFAULT                                                          \
@@ -342,21 +357,88 @@ void camerainitialize(camera *c) {
   defocusradius = c->focusdist * tan(degtorad(c->defocusangle / 2.0));
   c->defocusdisku = v3scale(c->u, defocusradius);
   c->defocusdiskv = v3scale(c->v, defocusradius);
+
+  assert(!pthread_mutex_init(&c->raymutex, 0));
+  assert(!pthread_cond_init(&c->raycond, 0));
+  assert(c->rays = calloc(sizeof(*(c->rays)), c->samplesperpixel));
+
+  assert(!pthread_mutex_init(&c->colormutex, 0));
+  assert(!pthread_cond_init(&c->colorcond, 0));
+  assert(c->colors = calloc(sizeof(*(c->colors)), c->samplesperpixel));
+}
+
+struct threaddata {
+  camera *c;
+  spherelist *world;
+};
+
+void *camerathread(void *userdata) {
+  struct threaddata *td = userdata;
+  camera *c = td->c;
+  spherelist *world = td->world;
+  ray *rays;
+  int maxjobs;
+  vec3 *colors;
+
+  maxjobs = c->samplesperpixel / NTHREADS;
+  assert(rays = calloc(sizeof(*rays), maxjobs));
+  assert(colors = calloc(sizeof(*colors), maxjobs));
+
+  while (1) {
+    int i, njobs = 0;
+    assert(!pthread_mutex_lock(&c->raymutex));
+    while (!c->nrays)
+      assert(!pthread_cond_wait(&c->raycond, &c->raymutex));
+    while (njobs < maxjobs && c->nrays)
+      rays[njobs++] = c->rays[--c->nrays];
+    assert(!pthread_mutex_unlock(&c->raymutex));
+
+    for (i = 0; i < njobs; i++)
+      colors[i] = raycolor(rays[i], c->maxdepth, world);
+
+    assert(!pthread_mutex_lock(&c->colormutex));
+    for (i = 0; i < njobs; i++)
+      c->colors[c->ncolors++] = colors[i];
+    assert(!pthread_mutex_unlock(&c->colormutex));
+    assert(!pthread_cond_broadcast(&c->colorcond));
+  }
+  return 0;
 }
 
 void camerarender(camera *c, spherelist *world) {
-  int i, j;
+  int i, j, k;
+  pthread_t threads[NTHREADS];
+  struct threaddata td;
 
   camerainitialize(c);
+  td.c = c;
+  td.world = world;
+  for (k = 0; k < NTHREADS; k++)
+    assert(!pthread_create(threads + k, 0, camerathread, &td));
+
   printf("P3\n%d %d\n255\n", c->imagewidth, c->imageheight);
 
   for (j = 0; j < c->imageheight; j++) {
     for (i = 0; i < c->imagewidth; i++) {
       vec3 pixelcolor = {0};
-      int k;
+
+      assert(!pthread_mutex_lock(&c->raymutex));
+      assert(!c->nrays);
       for (k = 0; k < c->samplesperpixel; k++)
-        pixelcolor =
-            v3add(pixelcolor, raycolor(getray(c, i, j), c->maxdepth, world));
+        c->rays[c->nrays++] = getray(c, i, j);
+      assert(!pthread_mutex_unlock(&c->raymutex));
+      assert(!pthread_cond_broadcast(&c->raycond));
+
+      k = 0;
+      while (k < c->samplesperpixel) {
+        assert(!pthread_mutex_lock(&c->colormutex));
+        while (!c->ncolors)
+          assert(!pthread_cond_wait(&c->colorcond, &c->colormutex));
+        for (; c->ncolors; c->ncolors--, k++)
+          pixelcolor = v3add(pixelcolor, c->colors[c->ncolors]);
+        assert(!pthread_mutex_unlock(&c->colormutex));
+      }
+
       writecolor(stdout, pixelcolor, c->samplesperpixel);
     }
     fputc('.', stderr);
