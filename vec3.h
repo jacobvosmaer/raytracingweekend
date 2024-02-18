@@ -1,7 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#if USENEON
+#if defined(__ARM_NEON)
 
 #include <arm_neon.h>
 typedef float32x4_t vec3;

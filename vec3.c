@@ -7,7 +7,7 @@ static float randomfloat(void) { return rand() / (RAND_MAX + 1.0); }
 
 static vec3 zero;
 
-#if USENEON
+#if defined(__ARM_NEON)
 
 float v3x(vec3 v) { return vdups_laneq_f32(v, 0); }
 float v3y(vec3 v) { return vdups_laneq_f32(v, 1); }
