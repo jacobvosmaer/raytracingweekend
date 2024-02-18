@@ -56,6 +56,10 @@ typedef struct {
 
 double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
 
+double pi = 3.1415926537;
+
+double degtorad(double deg) { return pi * deg / 180.0; }
+
 material lambertian(vec3 albedo) {
   material mat;
   mat.type = LAMBERTIAN;
@@ -338,6 +342,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
 typedef struct {
   double aspectratio;
   int imagewidth, samplesperpixel, maxdepth;
+  double vfov;
 
   /* derived values */
   int imageheight;
@@ -345,7 +350,7 @@ typedef struct {
 } camera;
 
 #define CAMERADEFAULT                                                          \
-  { 1.0, 100, 10, 10 }
+  { 1, 100, 10, 10, 90 }
 
 vec3 pixelsamplesquare(camera *c) {
   double px = -0.5 + randomdouble(), py = -0.5 + randomdouble();
@@ -362,12 +367,16 @@ ray getray(camera *c, int i, int j) {
 }
 
 void camerainitialize(camera *c) {
-  double focallength = 1, viewportheight = 2, viewportwidth;
+  double focallength, viewportheight, viewportwidth, h;
   vec3 viewportu, viewportv, viewportupperleft;
 
   c->imageheight = c->imagewidth / c->aspectratio;
   if (c->imageheight < 1)
     c->imageheight = 1;
+
+  focallength = 1;
+  h = tan(degtorad(c->vfov) / 2);
+  viewportheight = 2 * h * focallength;
   viewportwidth = viewportheight * ((double)c->imagewidth / c->imageheight);
   viewportu = v3(viewportwidth, 0, 0);
   viewportv = v3(0, -viewportheight, 0);
@@ -402,20 +411,18 @@ void camerarender(camera *c, spherelist *world) {
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  material matground = lambertian(v3(0.8, 0.8, 0)),
-           matcenter = lambertian(v3(0.1, 0.2, 0.5)), matleft = dielectric(1.5),
-           matright = metal(v3(0.8, 0.6, 0.2), 0);
+  double R = cos(pi / 4);
+  material matleft = lambertian(v3(0, 0, 1)),
+           matright = lambertian(v3(1, 0, 0));
 
-  spherelistadd(&world, sphere(v3(0, -100.5, -1), 100, matground));
-  spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
-  spherelistadd(&world, sphere(v3(-1, 0, -1), 0.5, matleft));
-  spherelistadd(&world, sphere(v3(-1, 0, -1), -0.4, matleft));
-  spherelistadd(&world, sphere(v3(1, 0, -1), 0.5, matright));
+  spherelistadd(&world, sphere(v3(-R, 0, -1), R, matleft));
+  spherelistadd(&world, sphere(v3(R, 0, -1), R, matright));
 
   cam.aspectratio = 16.0 / 9.0;
   cam.imagewidth = 400;
   cam.samplesperpixel = 100;
   cam.maxdepth = 50;
+  cam.vfov = 90;
   camerarender(&cam, &world);
 
   return 0;
