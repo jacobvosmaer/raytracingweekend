@@ -3,8 +3,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-static float randomfloat(void) { return rand() / (RAND_MAX + 1.0); }
-
 static vec3 zero;
 
 #if defined(__ARM_NEON)

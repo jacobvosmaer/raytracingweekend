@@ -34,4 +34,6 @@ vec3 v3randomunit(void);
 vec3 v3randominunitdisk(void);
 int v3nearzero(vec3 v);
 
+float randomfloat(void);
+
 #endif

@@ -52,7 +52,7 @@ typedef struct {
   material mat;
 } hitrecord;
 
-float randomfloat(void) { return rand() / (RAND_MAX + 1.0); }
+float randomfloat(void) { return random() / ((float)(1L << 31)); }
 
 float pi = 3.1415926536;
 
@@ -368,6 +368,8 @@ int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
   int a, b;
+
+  srandom(31415926);
 
   spherelistadd(&world,
                 sphere(v3(0, -1000, 0), 1000, lambertian(v3(0.5, 0.5, 0.5))));
