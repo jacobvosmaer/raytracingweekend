@@ -18,7 +18,7 @@ typedef struct {
   vec3 orig, dir;
 } ray;
 
-enum material { LAMBERTIAN, METAL };
+enum material { LAMBERTIAN, METAL, DIELECTRIC };
 
 typedef struct {
   enum material type;
@@ -30,6 +30,9 @@ typedef struct {
       vec3 albedo;
       double fuzz;
     } metal;
+    struct dielectric {
+      double ir;
+    } dielectric;
   } data;
 } material;
 
@@ -65,6 +68,13 @@ material metal(vec3 albedo, double fuzz) {
   mat.type = METAL;
   mat.data.metal.albedo = albedo;
   mat.data.metal.fuzz = fuzz > 1 ? 1 : fuzz;
+  return mat;
+}
+
+material dielectric(double ir) {
+  material mat;
+  mat.type = DIELECTRIC;
+  mat.data.dielectric.ir = ir;
   return mat;
 }
 
@@ -248,6 +258,13 @@ vec3 randomonhemisphere(vec3 normal) {
 
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
 
+vec3 refract(vec3 uv, vec3 n, double etaioveretat) {
+  double costheta = fmin(v3dot(v3neg(uv), n), 1);
+  vec3 routperp = v3scale(v3add(uv, v3scale(n, costheta)), etaioveretat),
+       routparallel = v3scale(n, -sqrt(fabs(1.0 - v3dot(routperp, routperp))));
+  return v3add(routperp, routparallel);
+}
+
 int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
             ray *scattered) {
   if (mat.type == LAMBERTIAN) {
@@ -265,6 +282,15 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
     scattered->orig = rec->p;
     scattered->dir = v3add(reflected, v3scale(v3randomunit(), data.fuzz));
     *attenuation = data.albedo;
+    return 1;
+  } else if (mat.type == DIELECTRIC) {
+    struct dielectric data = mat.data.dielectric;
+    vec3 transparent = {1, 1, 1};
+    double refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
+    vec3 refracted = refract(v3unit(in.dir), rec->normal, refractionratio);
+    *attenuation = transparent;
+    scattered->orig = rec->p;
+    scattered->dir = refracted;
     return 1;
   } else {
     return 0;
@@ -356,10 +382,8 @@ void camerarender(camera *c, spherelist *world) {
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  material matground = lambertian(v3(0.8, 0.8, 0)),
-           matcenter = lambertian(v3(0.7, 0.3, 0.3)),
-           matleft = metal(v3(0.8, 0.8, 0.8), 0.3),
-           matright = metal(v3(0.8, 0.6, 0.2), 1.0);
+  material matground = lambertian(v3(0.8, 0.8, 0)), matcenter = dielectric(1.5),
+           matleft = dielectric(1.5), matright = metal(v3(0.8, 0.6, 0.2), 1.0);
 
   spherelistadd(&world, sphere(v3(0, -100.5, -1), 100, matground));
   spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
