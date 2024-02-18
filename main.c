@@ -265,6 +265,12 @@ vec3 refract(vec3 uv, vec3 n, double etaioveretat) {
   return v3add(routperp, routparallel);
 }
 
+double reflectance(double cosine, double refidx) {
+  double r0 = (1.0 - refidx) / (1.0 + refidx);
+  r0 *= r0;
+  return r0 + (1.0 - r0) * pow(1.0 - cosine, 5);
+}
+
 int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
             ray *scattered) {
   if (mat.type == LAMBERTIAN) {
@@ -292,9 +298,11 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
            sintheta = sqrt(1.0 - costheta * costheta);
     *attenuation = transparent;
     scattered->orig = rec->p;
-    scattered->dir = refractionratio * sintheta > 1.0
-                         ? reflect(unitdirection, rec->normal)
-                         : refract(unitdirection, rec->normal, refractionratio);
+    scattered->dir =
+        refractionratio * sintheta > 1.0 ||
+                reflectance(costheta, refractionratio) > randomdouble()
+            ? reflect(unitdirection, rec->normal)
+            : refract(unitdirection, rec->normal, refractionratio);
     return 1;
   } else {
     return 0;
