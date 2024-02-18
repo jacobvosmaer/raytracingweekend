@@ -3,9 +3,38 @@
 #include <math.h>
 #include <stdlib.h>
 
-static double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
+static float randomfloat(void) { return rand() / (RAND_MAX + 1.0); }
 
-vec3 v3(double x, double y, double z) {
+static vec3 zero;
+
+#if USENEON
+
+float v3x(vec3 v) { return vdups_laneq_f32(v, 0); }
+float v3y(vec3 v) { return vdups_laneq_f32(v, 1); }
+float v3z(vec3 v) { return vdups_laneq_f32(v, 2); }
+
+vec3 v3(float x, float y, float z) {
+  float32_t ar[4];
+  ar[0] = x;
+  ar[1] = y;
+  ar[2] = z;
+  ar[3] = 0;
+  return vld1q_f32(ar);
+}
+
+vec3 v3add(vec3 v, vec3 w) { return vaddq_f32(v, w); }
+vec3 v3sub(vec3 v, vec3 w) { return vsubq_f32(v, w); }
+vec3 v3mul(vec3 v, vec3 w) { return vmulq_f32(v, w); }
+vec3 v3scale(vec3 v, float c) { return vmulq_n_f32(v, c); }
+float v3dot(vec3 v, vec3 w) { return vaddvq_f32(vmulq_f32(v, w)); }
+
+#else
+
+float v3x(vec3 v) { return v.x; }
+float v3y(vec3 v) { return v.y; }
+float v3z(vec3 v) { return v.z; }
+
+vec3 v3(float x, float y, float z) {
   vec3 v;
   v.x = x;
   v.y = y;
@@ -27,11 +56,6 @@ vec3 v3sub(vec3 v, vec3 w) {
   return v;
 }
 
-vec3 v3neg(vec3 v) {
-  vec3 zero = {0};
-  return v3sub(zero, v);
-}
-
 vec3 v3mul(vec3 v, vec3 w) {
   v.x *= w.x;
   v.y *= w.y;
@@ -39,27 +63,30 @@ vec3 v3mul(vec3 v, vec3 w) {
   return v;
 }
 
-vec3 v3scale(vec3 v, double c) {
+vec3 v3scale(vec3 v, float c) {
   v.x *= c;
   v.y *= c;
   v.z *= c;
   return v;
 }
 
-double v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
-double v3length(vec3 v) { return sqrt(v3dot(v, v)); }
+float v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
+
+#endif
+
+vec3 v3neg(vec3 v) { return v3sub(zero, v); }
+
+float v3length(vec3 v) { return sqrtf(v3dot(v, v)); }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
-
 vec3 v3cross(vec3 v, vec3 w) {
-  return v3(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z,
-            v.x * w.y - v.y * w.x);
+  return v3(v3y(v) * v3z(w) - v3z(v) * v3y(w),
+            v3z(v) * v3x(w) - v3x(v) * v3z(w),
+            v3x(v) * v3y(w) - v3y(v) * v3x(w));
 }
 
-vec3 v3random(void) {
-  return v3(randomdouble(), randomdouble(), randomdouble());
-}
+vec3 v3random(void) { return v3(randomfloat(), randomfloat(), randomfloat()); }
 
-vec3 v3randominterval(double min, double max) {
+vec3 v3randominterval(float min, float max) {
   return v3add(v3(min, min, min), v3scale(v3random(), max - min));
 }
 
@@ -73,8 +100,7 @@ vec3 v3randomunit(void) {
 
 vec3 v3randominunitdisk(void) {
   while (1) {
-    vec3 v = v3randominterval(-1, 1);
-    v.z = 0;
+    vec3 v = v3(-1.0 + 2.0 * randomfloat(), -1.0 + 2.0 * randomfloat(), 0);
     if (v3dot(v, v) < 1)
       return v;
   }
