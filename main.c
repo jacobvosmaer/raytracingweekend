@@ -143,8 +143,8 @@ vec3 v3scale(vec3 v, double c) {
   return v;
 }
 
-double v3length(vec3 v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
 double v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
+double v3length(vec3 v) { return sqrt(v3dot(v, v)); }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
 
 vec3 v3cross(vec3 v, vec3 w) {
