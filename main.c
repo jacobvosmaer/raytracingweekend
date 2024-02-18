@@ -147,6 +147,11 @@ double v3length(vec3 v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
 double v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
 
+vec3 v3cross(vec3 v, vec3 w) {
+  return v3(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z,
+            v.x * w.y - v.y * w.x);
+}
+
 vec3 v3random(void) {
   return v3(randomdouble(), randomdouble(), randomdouble());
 }
@@ -343,14 +348,17 @@ typedef struct {
   double aspectratio;
   int imagewidth, samplesperpixel, maxdepth;
   double vfov;
+  vec3 lookfrom, lookat, vup;
 
   /* derived values */
   int imageheight;
-  vec3 center, pixeldu, pixeldv, pixel00loc;
+  vec3 center, pixeldu, pixeldv, pixel00loc, u, v, w;
 } camera;
 
 #define CAMERADEFAULT                                                          \
-  { 1, 100, 10, 10, 90 }
+  {                                                                            \
+    1, 100, 10, 10, 90, {0, 0, -1}, {0, 0, 0}, { 0, 1, 0 }                     \
+  }
 
 vec3 pixelsamplesquare(camera *c) {
   double px = -0.5 + randomdouble(), py = -0.5 + randomdouble();
@@ -374,18 +382,25 @@ void camerainitialize(camera *c) {
   if (c->imageheight < 1)
     c->imageheight = 1;
 
-  focallength = 1;
+  c->center = c->lookfrom;
+
+  focallength = v3length(v3sub(c->lookfrom, c->lookat));
   h = tan(degtorad(c->vfov) / 2);
   viewportheight = 2 * h * focallength;
   viewportwidth = viewportheight * ((double)c->imagewidth / c->imageheight);
-  viewportu = v3(viewportwidth, 0, 0);
-  viewportv = v3(0, -viewportheight, 0);
+
+  c->w = v3unit(v3sub(c->lookfrom, c->lookat));
+  c->u = v3unit(v3cross(c->vup, c->w));
+  c->v = v3cross(c->w, c->u);
+
+  viewportu = v3scale(c->u, viewportwidth);
+  viewportv = v3scale(v3neg(c->v), viewportheight);
   c->pixeldu = v3scale(viewportu, 1.0 / c->imagewidth);
   c->pixeldv = v3scale(viewportv, 1.0 / c->imageheight);
 
-  viewportupperleft = v3add(
-      v3add(v3add(c->center, v3(0, 0, -focallength)), v3scale(viewportu, -0.5)),
-      v3scale(viewportv, -0.5));
+  viewportupperleft = v3sub(v3sub(v3sub(c->center, v3scale(c->w, focallength)),
+                                  v3scale(viewportu, 0.5)),
+                            v3scale(viewportv, 0.5));
   c->pixel00loc =
       v3add(viewportupperleft, v3scale(v3add(c->pixeldu, c->pixeldv), 0.5));
 }
@@ -411,18 +426,26 @@ void camerarender(camera *c, spherelist *world) {
 int main(void) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  double R = cos(pi / 4);
-  material matleft = lambertian(v3(0, 0, 1)),
-           matright = lambertian(v3(1, 0, 0));
+  material matground = lambertian(v3(0.8, 0.8, 0)),
+           matcenter = lambertian(v3(0.1, 0.2, 0.5)), matleft = dielectric(1.5),
+           matright = metal(v3(0.8, 0.6, 0.2), 0);
 
-  spherelistadd(&world, sphere(v3(-R, 0, -1), R, matleft));
-  spherelistadd(&world, sphere(v3(R, 0, -1), R, matright));
+  spherelistadd(&world, sphere(v3(0, -100.5, 1), 100, matground));
+  spherelistadd(&world, sphere(v3(0, 0, -1), 0.5, matcenter));
+  spherelistadd(&world, sphere(v3(-1, 0, -1), 0.5, matleft));
+  spherelistadd(&world, sphere(v3(-1, 0, -1), -0.4, matleft));
+  spherelistadd(&world, sphere(v3(1, 0, -1), 0.5, matright));
 
   cam.aspectratio = 16.0 / 9.0;
   cam.imagewidth = 400;
   cam.samplesperpixel = 100;
   cam.maxdepth = 50;
-  cam.vfov = 90;
+
+  cam.vfov = 20;
+  cam.lookfrom = v3(-2, 2, 1);
+  cam.lookat = v3(0, 0, -1);
+  cam.vup = v3(0, 1, 0);
+
   camerarender(&cam, &world);
 
   return 0;
