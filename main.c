@@ -218,15 +218,19 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   double sqrtd, root;
 
   if (discriminant < 0)
-    return 0;
+    return 0; /* The ray does not hit the sphere */
+
+  /* The ray hits the sphere in 1 or 2 points (roots). Do any of the roots lie
+   * in the interval? */
   sqrtd = sqrt(discriminant);
-  root = (-halfb - sqrtd) / a;
+  root = (-halfb - sqrtd) / a; /* Prefer the nearest root. */
   if (!intervalsurrounds(t, root)) {
     root = (-halfb + sqrtd) / a;
     if (!intervalsurrounds(t, root))
       return 0;
   }
 
+  /* Root is the nearest intersection of the ray and the sphere */
   rec->t = root;
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
@@ -236,16 +240,16 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
 }
 
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
-  int i, nhit = 0;
+  int i, hit = 0;
   double closest = t.max;
 
   for (i = 0; i < sl->n; i++) {
     if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
-      nhit++;
+      hit = 1;
       closest = rec->t;
     }
   }
-  return !!nhit;
+  return hit;
 }
 
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
@@ -263,6 +267,10 @@ double reflectance(double cosine, double refidx) {
   return r0 + (1.0 - r0) * pow(1.0 - cosine, 5);
 }
 
+/* Scatter factors out the material-specific behavior of the ray-tracing
+ * function raycolor below. If scatter returns 0 the in ray has been fully
+ * absorbed. If it returns a non-zero value then attenuation and scattered
+ * describe the outbound ray. */
 int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
             ray *scattered) {
   if (mat.type == LAMBERTIAN) {
@@ -283,24 +291,28 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
     return 1;
   } else if (mat.type == DIELECTRIC) {
     struct dielectric data = mat.data.dielectric;
-    vec3 transparent = {1, 1, 1};
     double refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
     vec3 unitdirection = v3unit(in.dir);
     double costheta = fmin(v3dot(v3neg(unitdirection), rec->normal), 1.0),
            sintheta = sqrt(1.0 - costheta * costheta);
-    *attenuation = transparent;
     scattered->orig = rec->p;
     scattered->dir =
         refractionratio * sintheta > 1.0 ||
                 reflectance(costheta, refractionratio) > randomdouble()
             ? reflect(unitdirection, rec->normal)
             : refract(unitdirection, rec->normal, refractionratio);
+    *attenuation = v3(1, 1, 1);
     return 1;
   } else {
     return 0;
   }
 }
 
+/* Raycolor recursively traces a single ray through the scene to compute its
+ * color. When a ray hits a dielectric material it randomly either reflects or
+ * refracts, i.e. the ray does not split. Because raycolor gets called more than
+ * once per pixel we still get the effect that dielectrics both reflect _and_
+ * refract. */
 vec3 raycolor(ray r, int depth, spherelist *world) {
   vec3 black = {0};
   hitrecord rec;
@@ -309,12 +321,14 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
     return black;
 
   if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
+    /* ray has hit an object */
     ray scattered;
     vec3 attenuation;
     if (scatter(rec.mat, r, &rec, &attenuation, &scattered))
       return v3mul(attenuation, raycolor(scattered, depth - 1, world));
     return black;
   } else {
+    /* ray has hit the sky */
     vec3 dir = v3unit(r.dir);
     double a = 0.5 * (dir.y + 1.0);
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
@@ -338,6 +352,8 @@ vec3 pixelsamplesquare(camera *c) {
   return v3add(v3scale(c->pixeldu, px), v3scale(c->pixeldv, py));
 }
 
+/* Getray returns a random ray near i, j. The randomness is for anti-aliasing.
+ */
 ray getray(camera *c, int i, int j) {
   vec3 pixelcenter = v3add(v3add(c->pixel00loc, v3scale(c->pixeldu, i)),
                            v3scale(c->pixeldv, j)),
