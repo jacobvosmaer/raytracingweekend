@@ -56,7 +56,7 @@ typedef struct {
 
 double randomdouble(void) { return rand() / (RAND_MAX + 1.0); }
 
-double pi = 3.1415926537;
+double pi = 3.1415926536;
 
 double degtorad(double deg) { return pi * deg / 180.0; }
 
@@ -170,9 +170,10 @@ vec3 v3randomunit(void) {
 
 vec3 v3randomunitdisk(void) {
   vec3 v;
-  do
-    v = v3add(v3(-1, -1, 0), v3scale(v3(randomdouble(), randomdouble(), 0), 2));
-  while (v3dot(v, v) > 1);
+  do {
+    v = v3randominterval(-1, 1);
+    v.z = 0;
+  } while (v3dot(v, v) > 1);
   return v3unit(v);
 }
 
@@ -452,14 +453,13 @@ int main(void) {
   for (a = -11; a < 11; a++) {
     for (b = -11; b < 11; b++) {
       double choosemat = randomdouble();
-      vec3 center = v3(a + 0.9 * randomdouble(), 0.2, b + 0.9 * randomdouble());
+      vec3 center = v3add(v3(a, 0.2, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
 
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
       else if (choosemat < 0.95)
-        mat = metal(v3add(v3(0.5, 0.5, 0.5), v3scale(v3random(), 0.5)),
-                    0.5 * randomdouble());
+        mat = metal(v3randominterval(0.5, 1), 0.5 * randomdouble());
       else
         mat = dielectric(1.5);
 
