@@ -7,13 +7,9 @@
 #define NTHREADS 8
 #endif
 
+#include "random.h"
+#include "util.h"
 #include "vec3.h"
-
-#define nelem(x) (sizeof(x) / sizeof(*(x)))
-#define endof(x) ((x) + nelem(x))
-#define assert(x)                                                              \
-  if (!(x))                                                                    \
-  __builtin_trap()
 
 struct interval {
   float min, max;
@@ -58,8 +54,6 @@ typedef struct {
   int frontface;
   material mat;
 } hitrecord;
-
-float randomfloat(void) { return random() / ((float)(1L << 31)); }
 
 float pi = 3.1415926536;
 
@@ -414,7 +408,8 @@ int main(void) {
   spherelist world = {0};
   int a, b;
 
-  srandom(31415926);
+  srandom(3141592653);
+  randominit();
 
   spherelistadd(&world,
                 sphere(v3(0, -1000, 0), 1000, lambertian(v3(0.5, 0.5, 0.5))));
