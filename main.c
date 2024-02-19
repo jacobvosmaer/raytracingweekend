@@ -139,14 +139,16 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
 
 pthread_key_t randomkey;
 
-void randominit(void) { assert(!pthread_key_create(&randomkey, 0)); }
+void randominit(void) {
+  srandom(3141592653);
+  assert(!pthread_key_create(&randomkey, 0));
+}
 
 float randomfloat(void) {
   struct MT19937state *mt = pthread_getspecific(randomkey);
 
   if (!mt) {
     assert(mt = malloc(sizeof(*mt)));
-    mt->index = nelem(mt->MT) + 1;
     MT19937seed(mt, random());
     assert(!pthread_setspecific(randomkey, mt));
   }
@@ -431,7 +433,6 @@ int main(void) {
   spherelist world = {0};
   int a, b;
 
-  srandom(3141592653);
   randominit();
 
   spherelistadd(&world,
