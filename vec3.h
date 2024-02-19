@@ -6,6 +6,11 @@
 #include <arm_neon.h>
 typedef float32x4_t vec3;
 
+#elif defined(__x86_64__)
+
+#include <immintrin.h>
+typedef __m128 vec3;
+
 #else
 
 typedef struct {

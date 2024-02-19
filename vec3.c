@@ -7,9 +7,9 @@ static vec3 zero;
 
 #if defined(__ARM_NEON)
 
-float v3x(vec3 v) { return vdups_laneq_f32(v, 0); }
-float v3y(vec3 v) { return vdups_laneq_f32(v, 1); }
-float v3z(vec3 v) { return vdups_laneq_f32(v, 2); }
+float v3x(vec3 v) { return v[0]; }
+float v3y(vec3 v) { return v[1]; }
+float v3z(vec3 v) { return v[2]; }
 
 vec3 v3(float x, float y, float z) {
   float32_t ar[4];
@@ -25,6 +25,30 @@ vec3 v3sub(vec3 v, vec3 w) { return vsubq_f32(v, w); }
 vec3 v3mul(vec3 v, vec3 w) { return vmulq_f32(v, w); }
 vec3 v3scale(vec3 v, float c) { return vmulq_n_f32(v, c); }
 float v3dot(vec3 v, vec3 w) { return vaddvq_f32(vmulq_f32(v, w)); }
+
+#elif defined(__x86_64__)
+
+float v3x(vec3 v) { return v[0]; }
+float v3y(vec3 v) { return v[1]; }
+float v3z(vec3 v) { return v[2]; }
+
+vec3 v3(float x, float y, float z) {
+  float ar[4];
+  ar[0] = x;
+  ar[1] = y;
+  ar[2] = z;
+  ar[3] = 0;
+  return _mm_load_ps(ar);
+}
+
+vec3 v3add(vec3 v, vec3 w) { return _mm_add_ps(v, w); }
+vec3 v3sub(vec3 v, vec3 w) { return _mm_sub_ps(v, w); }
+vec3 v3mul(vec3 v, vec3 w) { return _mm_mul_ps(v, w); }
+vec3 v3scale(vec3 v, float c) { return v3mul(v, _mm_load_ps1(&c)); }
+float v3dot(vec3 v, vec3 w) {
+  v = v3mul(v, w);
+  return v[0] + v[1] + v[2] + v[3];
+}
 
 #else
 
