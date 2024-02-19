@@ -7,9 +7,15 @@
 #define NTHREADS 8
 #endif
 
+#include "mt19937.h"
 #include "random.h"
-#include "util.h"
 #include "vec3.h"
+
+#define nelem(x) (sizeof(x) / sizeof(*(x)))
+#define endof(x) ((x) + nelem(x))
+#define assert(x)                                                              \
+  if (!(x))                                                                    \
+  __builtin_trap()
 
 struct interval {
   float min, max;
@@ -129,6 +135,23 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
   }
   sl->spheres[sl->n++] = sp;
+}
+
+pthread_key_t randomkey;
+
+void randominit(void) { assert(!pthread_key_create(&randomkey, 0)); }
+
+float randomfloat(void) {
+  struct MT19937state *mt = pthread_getspecific(randomkey);
+
+  if (!mt) {
+    assert(mt = malloc(sizeof(*mt)));
+    mt->index = nelem(mt->MT) + 1;
+    MT19937seed(mt, random());
+    assert(!pthread_setspecific(randomkey, mt));
+  }
+
+  return (float)MT19937extract(mt) / (float)(1L << 32);
 }
 
 void writecolor(vec3 color, int nsamples) {
