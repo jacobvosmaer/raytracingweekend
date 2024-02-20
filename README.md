@@ -8,3 +8,5 @@ The book gives step by step instructions to write a ray tracer in C++. In this r
 make
 ./main > image.ppm
 ```
+
+For more information about this repository, see the [blog post](https://blog.jacobvosmaer.nl/0022-ray-tracing-weekend/) where I talk about what I did here.
