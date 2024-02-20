@@ -438,11 +438,25 @@ int main(void) {
   spherelistadd(&world,
                 sphere(v3(0, -1000, 0), 1000, lambertian(v3(0.5, 0.5, 0.5))));
 
+  spherelistadd(&world, sphere(v3(0, 1, 0), 1, dielectric(1.5)));
+  spherelistadd(&world, sphere(v3(-4, 1, 0), 1, lambertian(v3(0.4, 0.2, 0.1))));
+  spherelistadd(&world, sphere(v3(4, 1, 0), 1, metal(v3(0.7, 0.6, 0.5), 0)));
+
   for (a = -11; a < 11; a++) {
     for (b = -11; b < 11; b++) {
-      float choosemat = randomfloat();
-      vec3 center = v3add(v3(a, 0.2, b), v3mul(v3(0.9, 0, 0.9), v3random()));
+      float choosemat = randomfloat(), radius = 0.2;
+      vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
+      struct sphere *sp;
+
+      for (sp = world.spheres; sp < world.spheres + world.n; sp++)
+        if (v3length(v3sub(sp->center, center)) < sp->radius + radius)
+          break;
+      if (sp - world.spheres <
+          world.n) { /* overlap with existing sphere, try again */
+        b--;
+        continue;
+      }
 
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
@@ -451,13 +465,9 @@ int main(void) {
       else
         mat = dielectric(1.5);
 
-      spherelistadd(&world, sphere(center, 0.2, mat));
+      spherelistadd(&world, sphere(center, radius, mat));
     }
   }
-
-  spherelistadd(&world, sphere(v3(0, 1, 0), 1, dielectric(1.5)));
-  spherelistadd(&world, sphere(v3(-4, 1, 0), 1, lambertian(v3(0.4, 0.2, 0.1))));
-  spherelistadd(&world, sphere(v3(4, 1, 0), 1, metal(v3(0.7, 0.6, 0.5), 0)));
 
   cam.aspectratio = 16.0 / 9.0;
   cam.imagewidth = 1200;
