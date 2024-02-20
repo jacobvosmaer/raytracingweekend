@@ -452,8 +452,8 @@ int main(void) {
       for (sp = world.spheres; sp < world.spheres + world.n; sp++)
         if (v3length(v3sub(sp->center, center)) < sp->radius + radius)
           break;
-      if (sp - world.spheres <
-          world.n) { /* overlap with existing sphere, try again */
+      if (sp - world.spheres < world.n) {
+        /* overlap with existing sphere, try again */
         b--;
         continue;
       }
