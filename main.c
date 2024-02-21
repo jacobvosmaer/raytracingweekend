@@ -196,24 +196,29 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
 
   /* Root is the nearest intersection of the ray and the sphere */
   rec->t = root;
-  rec->p = rayat(r, rec->t);
-  hitrecordsetnormal(rec, r,
-                     v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
-  rec->mat = sp.mat;
   return 1;
 }
 
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
-  int i, hit = 0;
+  int i;
   float closest = t.max;
+  struct sphere *hit = 0;
 
   for (i = 0; i < sl->n; i++) {
     if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
-      hit = 1;
+      hit = sl->spheres + i;
       closest = rec->t;
     }
   }
-  return hit;
+
+  if (hit) {
+    rec->p = rayat(r, rec->t);
+    hitrecordsetnormal(rec, r,
+                       v3scale(v3sub(rec->p, hit->center), 1.0 / hit->radius));
+    rec->mat = hit->mat;
+  }
+
+  return !!hit;
 }
 
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
