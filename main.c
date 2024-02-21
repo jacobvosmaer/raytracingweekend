@@ -173,13 +173,13 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->normal = rec->frontface ? outwardnormal : v3neg(outwardnormal);
 }
 
-int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
+int spherehit(struct sphere sp, ray r, struct interval t, float *root) {
   vec3 oc = v3sub(r.orig, sp.center);
   float a = v3dot(r.dir, r.dir);
   float halfb = v3dot(oc, r.dir);
   float c = v3dot(oc, oc) - sp.radius * sp.radius;
   float discriminant = halfb * halfb - a * c;
-  float sqrtd, root;
+  float sqrtd;
 
   if (discriminant < 0)
     return 0; /* The ray does not hit the sphere */
@@ -187,15 +187,13 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   /* The ray hits the sphere in 1 or 2 points (roots). Do any of the roots lie
    * in the interval? */
   sqrtd = sqrtf(discriminant);
-  root = (-halfb - sqrtd) / a; /* Prefer the nearest root. */
-  if (!intervalsurrounds(t, root)) {
-    root = (-halfb + sqrtd) / a;
-    if (!intervalsurrounds(t, root))
+  *root = (-halfb - sqrtd) / a; /* Prefer the nearest root. */
+  if (!intervalsurrounds(t, *root)) {
+    *root = (-halfb + sqrtd) / a;
+    if (!intervalsurrounds(t, *root))
       return 0;
   }
 
-  /* Root is the nearest intersection of the ray and the sphere */
-  rec->t = root;
   return 1;
 }
 
@@ -205,13 +203,15 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   struct sphere *hit = 0;
 
   for (i = 0; i < sl->n; i++) {
-    if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
+    float root;
+    if (spherehit(sl->spheres[i], r, interval(t.min, closest), &root)) {
       hit = sl->spheres + i;
-      closest = rec->t;
+      closest = root;
     }
   }
 
   if (hit) {
+    rec->t = closest;
     rec->p = rayat(r, rec->t);
     hitrecordsetnormal(rec, r,
                        v3scale(v3sub(rec->p, hit->center), 1.0 / hit->radius));
