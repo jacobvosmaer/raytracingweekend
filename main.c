@@ -400,7 +400,11 @@ void *camerathread(void *userdata) {
                            raycolor(getray(c, i, j), c->maxdepth, td->world));
       *cameraoutputpixel(c, i, j) = pixelcolor;
     }
+    if (!td->offset)
+      fputc('.', stderr);
   }
+  if (!td->offset)
+    fputc('\n', stderr);
 
   return 0;
 }
