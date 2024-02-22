@@ -6,7 +6,7 @@
 
 static vec3 zero;
 
-#if defined(__ARM_NEON)
+#if USENEON
 
 float v3x(vec3 v) { return v[0]; }
 float v3y(vec3 v) { return v[1]; }
@@ -27,7 +27,7 @@ vec3 v3mul(vec3 v, vec3 w) { return vmulq_f32(v, w); }
 vec3 v3scale(vec3 v, float c) { return vmulq_n_f32(v, c); }
 float v3dot(vec3 v, vec3 w) { return vaddvq_f32(vmulq_f32(v, w)); }
 
-#elif defined(__x86_64__)
+#elif USESSE
 
 float v3x(vec3 v) { return v[0]; }
 float v3y(vec3 v) { return v[1]; }
