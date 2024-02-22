@@ -18,7 +18,7 @@
   __builtin_trap()
 
 struct interval {
-  float min, max;
+  scalar min, max;
 };
 
 typedef struct {
@@ -35,17 +35,17 @@ typedef struct {
     } lambertian;
     struct metal {
       vec3 albedo;
-      float fuzz;
+      scalar fuzz;
     } metal;
     struct dielectric {
-      float ir;
+      scalar ir;
     } dielectric;
   } data;
 } material;
 
 struct sphere {
   vec3 center;
-  float radius;
+  scalar radius;
   material mat;
 };
 
@@ -56,14 +56,14 @@ typedef struct {
 
 typedef struct {
   vec3 p, normal;
-  float t;
+  scalar t;
   int frontface;
   material mat;
 } hitrecord;
 
-float pi = 3.1415926536;
+scalar pi = 3.1415926536;
 
-float degtorad(float deg) { return pi * deg / 180.0; }
+scalar degtorad(scalar deg) { return pi * deg / 180.0; }
 
 material lambertian(vec3 albedo) {
   material mat;
@@ -72,7 +72,7 @@ material lambertian(vec3 albedo) {
   return mat;
 }
 
-material metal(vec3 albedo, float fuzz) {
+material metal(vec3 albedo, scalar fuzz) {
   material mat;
   mat.type = METAL;
   mat.data.metal.albedo = albedo;
@@ -80,25 +80,25 @@ material metal(vec3 albedo, float fuzz) {
   return mat;
 }
 
-material dielectric(float ir) {
+material dielectric(scalar ir) {
   material mat;
   mat.type = DIELECTRIC;
   mat.data.dielectric.ir = ir;
   return mat;
 }
 
-struct interval interval(float min, float max) {
+struct interval interval(scalar min, scalar max) {
   struct interval iv;
   iv.min = min;
   iv.max = max;
   return iv;
 }
 
-int intervalsurrounds(struct interval iv, float x) {
+int intervalsurrounds(struct interval iv, scalar x) {
   return x > iv.min && x < iv.max;
 }
 
-float intervalclamp(struct interval iv, float x) {
+scalar intervalclamp(struct interval iv, scalar x) {
   if (x < iv.min)
     return iv.min;
   else if (x > iv.max)
@@ -108,11 +108,11 @@ float intervalclamp(struct interval iv, float x) {
 }
 
 int v3nearzero(vec3 v) {
-  float s = 1e-8;
+  scalar s = 1e-8;
   return fabsf(v3x(v)) < s && fabsf(v3y(v)) < s && fabsf(v3z(v)) < s;
 }
 
-vec3 rayat(ray r, float t) { return v3add(r.orig, v3scale(r.dir, t)); }
+vec3 rayat(ray r, scalar t) { return v3add(r.orig, v3scale(r.dir, t)); }
 
 ray rayfromto(vec3 from, vec3 to) {
   ray r;
@@ -121,7 +121,7 @@ ray rayfromto(vec3 from, vec3 to) {
   return r;
 }
 
-struct sphere sphere(vec3 center, float radius, material mat) {
+struct sphere sphere(vec3 center, scalar radius, material mat) {
   struct sphere sp;
   sp.center = center;
   sp.radius = radius;
@@ -144,7 +144,7 @@ void randominit(void) {
   assert(!pthread_key_create(&randomkey, 0));
 }
 
-float randomfloat(void) {
+scalar randomscalar(void) {
   struct MT19937state *mt = pthread_getspecific(randomkey);
 
   if (!mt) {
@@ -153,11 +153,11 @@ float randomfloat(void) {
     assert(!pthread_setspecific(randomkey, mt));
   }
 
-  return (float)MT19937extract(mt) / (float)(1L << 32);
+  return (scalar)MT19937extract(mt) / (scalar)(1L << 32);
 }
 
 void writecolor(vec3 color, int nsamples) {
-  float r, g, b;
+  scalar r, g, b;
   struct interval intensity = interval(0, 0.999);
   color = v3scale(color, 1.0 / nsamples);
   /* Use sqrt as gamma correction */
@@ -175,11 +175,11 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
 
 int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   vec3 oc = v3sub(r.orig, sp.center);
-  float a = v3dot(r.dir, r.dir);
-  float halfb = v3dot(oc, r.dir);
-  float c = v3dot(oc, oc) - sp.radius * sp.radius;
-  float discriminant = halfb * halfb - a * c;
-  float sqrtd, root;
+  scalar a = v3dot(r.dir, r.dir);
+  scalar halfb = v3dot(oc, r.dir);
+  scalar c = v3dot(oc, oc) - sp.radius * sp.radius;
+  scalar discriminant = halfb * halfb - a * c;
+  scalar sqrtd, root;
 
   if (discriminant < 0)
     return 0; /* The ray does not hit the sphere */
@@ -205,7 +205,7 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
 
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int i, hit = 0;
-  float closest = t.max;
+  scalar closest = t.max;
 
   for (i = 0; i < sl->n; i++) {
     if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
@@ -218,15 +218,15 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
 
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
 
-vec3 refract(vec3 uv, vec3 n, float etaioveretat) {
-  float costheta = fmin(v3dot(v3neg(uv), n), 1);
+vec3 refract(vec3 uv, vec3 n, scalar etaioveretat) {
+  scalar costheta = fmin(v3dot(v3neg(uv), n), 1);
   vec3 routperp = v3scale(v3add(uv, v3scale(n, costheta)), etaioveretat),
        routparallel = v3scale(n, -sqrtf(fabs(1.0 - v3dot(routperp, routperp))));
   return v3add(routperp, routparallel);
 }
 
-float reflectance(float cosine, float refidx) {
-  float r0 = (1.0 - refidx) / (1.0 + refidx);
+scalar reflectance(scalar cosine, scalar refidx) {
+  scalar r0 = (1.0 - refidx) / (1.0 + refidx);
   r0 *= r0;
   return r0 + (1.0 - r0) * pow(1.0 - cosine, 5);
 }
@@ -255,14 +255,14 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
     return 1;
   } else if (mat.type == DIELECTRIC) {
     struct dielectric data = mat.data.dielectric;
-    float refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
+    scalar refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
     vec3 unitdirection = v3unit(in.dir);
-    float costheta = fmin(v3dot(v3neg(unitdirection), rec->normal), 1.0),
-          sintheta = sqrtf(1.0 - costheta * costheta);
+    scalar costheta = fmin(v3dot(v3neg(unitdirection), rec->normal), 1.0),
+           sintheta = sqrtf(1.0 - costheta * costheta);
     scattered->orig = rec->p;
     scattered->dir =
         refractionratio * sintheta > 1.0 ||
-                reflectance(costheta, refractionratio) > randomfloat()
+                reflectance(costheta, refractionratio) > randomscalar()
             ? reflect(unitdirection, rec->normal)
             : refract(unitdirection, rec->normal, refractionratio);
     *attenuation = v3(1, 1, 1);
@@ -294,17 +294,17 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
   } else {
     /* ray has hit the sky */
     vec3 dir = v3unit(r.dir);
-    float a = 0.5 * (v3y(dir) + 1.0);
+    scalar a = 0.5 * (v3y(dir) + 1.0);
     return v3add(v3scale(v3(1, 1, 1), 1.0 - a), v3scale(v3(0.5, 0.7, 1), a));
   }
 }
 
 typedef struct {
-  float aspectratio;
+  scalar aspectratio;
   int imagewidth, samplesperpixel, maxdepth;
-  float vfov;
+  scalar vfov;
   vec3 lookfrom, lookat, vup;
-  float defocusangle, focusdist;
+  scalar defocusangle, focusdist;
 
   /* derived values */
   int imageheight;
@@ -318,7 +318,7 @@ typedef struct {
   { 1, 100, 10, 10, 90, {0, 0, -1}, {0, 0, 0}, {0, 1, 0}, 0, 10 }
 
 vec3 pixelsamplesquare(camera *c) {
-  float px = -0.5 + randomfloat(), py = -0.5 + randomfloat();
+  scalar px = -0.5 + randomscalar(), py = -0.5 + randomscalar();
   return v3add(v3scale(c->pixeldu, px), v3scale(c->pixeldv, py));
 }
 
@@ -339,7 +339,7 @@ ray getray(camera *c, int i, int j) {
 }
 
 void camerainitialize(camera *c) {
-  float viewportheight, viewportwidth, h, defocusradius;
+  scalar viewportheight, viewportwidth, h, defocusradius;
   vec3 viewportu, viewportv, viewportupperleft;
 
   c->imageheight = c->imagewidth / c->aspectratio;
@@ -350,7 +350,7 @@ void camerainitialize(camera *c) {
 
   h = tan(degtorad(c->vfov) / 2);
   viewportheight = 2 * h * c->focusdist;
-  viewportwidth = viewportheight * ((float)c->imagewidth / c->imageheight);
+  viewportwidth = viewportheight * ((scalar)c->imagewidth / c->imageheight);
 
   c->w = v3unit(v3sub(c->lookfrom, c->lookat));
   c->u = v3unit(v3cross(c->vup, c->w));
@@ -448,7 +448,7 @@ int main(void) {
 
   for (a = -11; a < 11; a++) {
     for (b = -11; b < 11; b++) {
-      float choosemat = randomfloat(), radius = 0.2;
+      scalar choosemat = randomscalar(), radius = 0.2;
       vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
       struct sphere *sp;
@@ -465,7 +465,7 @@ int main(void) {
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
       else if (choosemat < 0.95)
-        mat = metal(v3randominterval(0.5, 1), 0.5 * randomfloat());
+        mat = metal(v3randominterval(0.5, 1), 0.5 * randomscalar());
       else
         mat = dielectric(1.5);
 
