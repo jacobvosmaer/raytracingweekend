@@ -45,10 +45,12 @@ vec3 v3(float x, float y, float z) {
 vec3 v3add(vec3 v, vec3 w) { return _mm_add_ps(v, w); }
 vec3 v3sub(vec3 v, vec3 w) { return _mm_sub_ps(v, w); }
 vec3 v3mul(vec3 v, vec3 w) { return _mm_mul_ps(v, w); }
-vec3 v3scale(vec3 v, float c) { return v3mul(v, _mm_load_ps1(&c)); }
+vec3 v3scale(vec3 v, float c) { return _mm_mul_ps(v, _mm_load_ps1(&c)); }
 float v3dot(vec3 v, vec3 w) {
-  v = v3mul(v, w);
-  return v[0] + v[1] + v[2] + v[3];
+  v = _mm_mul_ps(v, w);
+  v = _mm_hadd_ps(v, v);
+  v = _mm_hadd_ps(v, v);
+  return v[0];
 }
 
 #else
