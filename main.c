@@ -445,7 +445,7 @@ int main(void) {
   spherelist world = {0};
   int a, b;
 
-  fprintf(stderr, "sizeof(struct sphere)=%ld\n", sizeof(struct sphere));
+  fprintf(stderr, "sizeof(struct sphere)=%ld sizeof(material)=%ld\n", sizeof(struct sphere),sizeof(material));
   randominit();
 
   spherelistadd(&world,
