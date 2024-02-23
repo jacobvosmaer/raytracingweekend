@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef NTHREADS
 #define NTHREADS 8
@@ -46,7 +47,7 @@ typedef struct {
 struct sphere {
   vec3 center;
   scalar radius;
-  material mat;
+  material *mat;
 };
 
 typedef struct {
@@ -58,7 +59,7 @@ typedef struct {
   vec3 p, normal;
   scalar t;
   int frontface;
-  material mat;
+  material *mat;
 } hitrecord;
 
 scalar pi = 3.1415926536;
@@ -125,7 +126,8 @@ struct sphere sphere(vec3 center, scalar radius, material mat) {
   struct sphere sp;
   sp.center = center;
   sp.radius = radius;
-  sp.mat = mat;
+  assert(sp.mat = malloc(sizeof(*sp.mat)));
+  memmove(sp.mat, &mat, sizeof(*sp.mat));
   return sp;
 }
 
@@ -235,10 +237,10 @@ scalar reflectance(scalar cosine, scalar refidx) {
  * function raycolor below. If scatter returns 0 the in ray has been fully
  * absorbed. If it returns a non-zero value then attenuation and scattered
  * describe the outbound ray. */
-int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
+int scatter(material *mat, ray in, hitrecord *rec, vec3 *attenuation,
             ray *scattered) {
-  if (mat.type == LAMBERTIAN) {
-    struct lambertian data = mat.data.lambertian;
+  if (mat->type == LAMBERTIAN) {
+    struct lambertian data = mat->data.lambertian;
     vec3 scatterdirection = v3add(rec->normal, v3randomunit());
     if (v3nearzero(scatterdirection))
       scatterdirection = rec->normal;
@@ -246,15 +248,15 @@ int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
     scattered->dir = scatterdirection;
     *attenuation = data.albedo;
     return 1;
-  } else if (mat.type == METAL) {
-    struct metal data = mat.data.metal;
+  } else if (mat->type == METAL) {
+    struct metal data = mat->data.metal;
     vec3 reflected = reflect(v3unit(in.dir), rec->normal);
     scattered->orig = rec->p;
     scattered->dir = v3add(reflected, v3scale(v3randomunit(), data.fuzz));
     *attenuation = data.albedo;
     return 1;
-  } else if (mat.type == DIELECTRIC) {
-    struct dielectric data = mat.data.dielectric;
+  } else if (mat->type == DIELECTRIC) {
+    struct dielectric data = mat->data.dielectric;
     scalar refractionratio = rec->frontface ? 1.0 / data.ir : data.ir;
     vec3 unitdirection = v3unit(in.dir);
     scalar costheta = fmin(v3dot(v3neg(unitdirection), rec->normal), 1.0),
@@ -443,6 +445,7 @@ int main(void) {
   spherelist world = {0};
   int a, b;
 
+  fprintf(stderr, "sizeof(struct sphere)=%ld\n", sizeof(struct sphere));
   randominit();
 
   spherelistadd(&world,
