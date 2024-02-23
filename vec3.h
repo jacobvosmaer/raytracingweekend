@@ -2,7 +2,7 @@
 #define VEC3_H
 
 #if defined(__x86_64__) && !defined(USESSE)
-#define USESSE 1
+#define USESSE 0
 #endif
 
 #if defined(__ARM_NEON) && !defined(USENEON)
