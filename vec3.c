@@ -154,42 +154,6 @@ scalar4 s4sqrt(scalar4 a) {
 
 scalar s4get(scalar4 a, int i) { return a.s[i]; }
 
-vec3x4 v3x4load(vec3 v) {
-  vec3x4 vv;
-  vv.x = s4load(v.x);
-  vv.y = s4load(v.y);
-  vv.z = s4load(v.z);
-  return vv;
-}
-
-vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
-  vv.x.s[i] = v.x;
-  vv.y.s[i] = v.y;
-  vv.z.s[i] = v.z;
-  return vv;
-}
-
-vec3x4 v3x4sub(vec3x4 v, vec3x4 w) {
-  v.x = s4sub(v.x, w.x);
-  v.y = s4sub(v.y, w.y);
-  v.z = s4sub(v.z, w.z);
-  return v;
-}
-
-vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
-  v.x = s4mul(v.x, w.x);
-  v.y = s4mul(v.y, w.y);
-  v.z = s4mul(v.z, w.z);
-  return v;
-}
-
-scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
-  v = v3x4mul(v, w);
-  return s4add(s4add(v.x, v.y), v.z);
-}
-
-vec3 v3x4get(vec3x4 v, int i) { return v3(v.x.s[i], v.y.s[i], v.z.s[i]); }
-
 #endif
 
 vec3 v3neg(vec3 v) { return v3sub(zero, v); }
@@ -224,4 +188,42 @@ vec3 v3randominunitdisk(void) {
     if (v3dot(v, v) < 1)
       return v;
   }
+}
+
+vec3x4 v3x4load(vec3 v) {
+  vec3x4 vv;
+  vv.x = s4load(v3x(v));
+  vv.y = s4load(v3y(v));
+  vv.z = s4load(v3z(v));
+  return vv;
+}
+
+vec3x4 v3x4sub(vec3x4 v, vec3x4 w) {
+  v.x = s4sub(v.x, w.x);
+  v.y = s4sub(v.y, w.y);
+  v.z = s4sub(v.z, w.z);
+  return v;
+}
+
+vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
+  v.x = s4mul(v.x, w.x);
+  v.y = s4mul(v.y, w.y);
+  v.z = s4mul(v.z, w.z);
+  return v;
+}
+
+scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
+  v = v3x4mul(v, w);
+  return s4add(s4add(v.x, v.y), v.z);
+}
+
+vec3 v3x4get(vec3x4 v, int i) {
+  return v3(s4get(v.x, i), s4get(v.y, i), s4get(v.z, i));
+}
+
+vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
+  vv.x = s4loadat(vv.x, v3x(v), i);
+  vv.y = s4loadat(vv.y, v3y(v), i);
+  vv.z = s4loadat(vv.z, v3z(v), i);
+  return vv;
 }
