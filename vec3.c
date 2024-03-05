@@ -8,25 +8,6 @@ static vec3 zero;
 
 #if USENEON
 
-scalar v3x(vec3 v) { return v[0]; }
-scalar v3y(vec3 v) { return v[1]; }
-scalar v3z(vec3 v) { return v[2]; }
-
-vec3 v3(scalar x, scalar y, scalar z) {
-  float32_t ar[4];
-  ar[0] = x;
-  ar[1] = y;
-  ar[2] = z;
-  ar[3] = 0;
-  return vld1q_f32(ar);
-}
-
-vec3 v3add(vec3 v, vec3 w) { return vaddq_f32(v, w); }
-vec3 v3sub(vec3 v, vec3 w) { return vsubq_f32(v, w); }
-vec3 v3mul(vec3 v, vec3 w) { return vmulq_f32(v, w); }
-vec3 v3scale(vec3 v, scalar c) { return vmulq_n_f32(v, c); }
-scalar v3dot(vec3 v, vec3 w) { return vaddvq_f32(vmulq_f32(v, w)); }
-
 scalar4 s4add(scalar4 a, scalar4 b) { return vaddq_f32(a, b); }
 scalar4 s4sub(scalar4 a, scalar4 b) { return vsubq_f32(a, b); }
 scalar4 s4mul(scalar4 a, scalar4 b) { return vmulq_f32(a, b); }
@@ -48,75 +29,7 @@ scalar4 s4abs(scalar4 a) { return vabsq_f32(a); }
 scalar4 s4sqrt(scalar4 a) { return vsqrtq_f32(a); }
 scalar s4get(scalar4 a, int i) { return a[i]; }
 
-#elif USESSE
-
-scalar v3x(vec3 v) { return v[0]; }
-scalar v3y(vec3 v) { return v[1]; }
-scalar v3z(vec3 v) { return v[2]; }
-
-vec3 v3(scalar x, scalar y, scalar z) {
-  scalar ar[4];
-  ar[0] = x;
-  ar[1] = y;
-  ar[2] = z;
-  ar[3] = 0;
-  return _mm_load_ps(ar);
-}
-
-vec3 v3add(vec3 v, vec3 w) { return _mm_add_ps(v, w); }
-vec3 v3sub(vec3 v, vec3 w) { return _mm_sub_ps(v, w); }
-vec3 v3mul(vec3 v, vec3 w) { return _mm_mul_ps(v, w); }
-vec3 v3scale(vec3 v, scalar c) { return _mm_mul_ps(v, _mm_load_ps1(&c)); }
-scalar v3dot(vec3 v, vec3 w) {
-  v = _mm_mul_ps(v, w);
-  v = _mm_hadd_ps(v, v);
-  v = _mm_hadd_ps(v, v);
-  return v[0];
-}
-
 #else
-
-scalar v3x(vec3 v) { return v.x; }
-scalar v3y(vec3 v) { return v.y; }
-scalar v3z(vec3 v) { return v.z; }
-
-vec3 v3(scalar x, scalar y, scalar z) {
-  vec3 v;
-  v.x = x;
-  v.y = y;
-  v.z = z;
-  return v;
-}
-
-vec3 v3add(vec3 v, vec3 w) {
-  v.x += w.x;
-  v.y += w.y;
-  v.z += w.z;
-  return v;
-}
-
-vec3 v3sub(vec3 v, vec3 w) {
-  v.x -= w.x;
-  v.y -= w.y;
-  v.z -= w.z;
-  return v;
-}
-
-vec3 v3mul(vec3 v, vec3 w) {
-  v.x *= w.x;
-  v.y *= w.y;
-  v.z *= w.z;
-  return v;
-}
-
-vec3 v3scale(vec3 v, scalar c) {
-  v.x *= c;
-  v.y *= c;
-  v.z *= c;
-  return v;
-}
-
-scalar v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
 
 scalar4 s4add(scalar4 a, scalar4 b) {
   int i;
@@ -176,6 +89,48 @@ scalar4 s4sqrt(scalar4 a) {
 scalar s4get(scalar4 a, int i) { return a.s[i]; }
 
 #endif
+
+scalar v3x(vec3 v) { return v.x; }
+scalar v3y(vec3 v) { return v.y; }
+scalar v3z(vec3 v) { return v.z; }
+
+vec3 v3(scalar x, scalar y, scalar z) {
+  vec3 v;
+  v.x = x;
+  v.y = y;
+  v.z = z;
+  return v;
+}
+
+vec3 v3add(vec3 v, vec3 w) {
+  v.x += w.x;
+  v.y += w.y;
+  v.z += w.z;
+  return v;
+}
+
+vec3 v3sub(vec3 v, vec3 w) {
+  v.x -= w.x;
+  v.y -= w.y;
+  v.z -= w.z;
+  return v;
+}
+
+vec3 v3mul(vec3 v, vec3 w) {
+  v.x *= w.x;
+  v.y *= w.y;
+  v.z *= w.z;
+  return v;
+}
+
+vec3 v3scale(vec3 v, scalar c) {
+  v.x *= c;
+  v.y *= c;
+  v.z *= c;
+  return v;
+}
+
+scalar v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
 
 vec3 v3neg(vec3 v) { return v3sub(zero, v); }
 

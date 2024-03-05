@@ -1,9 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#if defined(__x86_64__) && !defined(USESSE)
-#define USESSE 0
-#endif
+typedef float scalar;
 
 #if defined(__ARM_NEON) && !defined(USENEON)
 #define USENEON 1
@@ -12,28 +10,19 @@
 #if USENEON
 
 #include <arm_neon.h>
-typedef float32x4_t vec3;
-typedef float scalar;
 typedef float32x4_t scalar4;
 
-#elif USESSE
-
-#include <immintrin.h>
-typedef __m128 vec3;
-typedef float scalar;
-
 #else
-
-typedef float scalar;
-typedef struct {
-  scalar x, y, z;
-} vec3;
 
 typedef struct {
   scalar s[4];
 } scalar4;
 
 #endif
+
+typedef struct {
+  scalar x, y, z;
+} vec3;
 
 typedef struct {
   scalar4 x, y, z;

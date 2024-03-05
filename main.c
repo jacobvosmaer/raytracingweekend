@@ -499,8 +499,8 @@ int main(void) {
   }
 
   cam.aspectratio = 16.0 / 9.0;
-  cam.imagewidth = 400;
-  cam.samplesperpixel = 100;
+  cam.imagewidth = 1200;
+  cam.samplesperpixel = 500;
   cam.maxdepth = 50;
 
   cam.vfov = 20;
