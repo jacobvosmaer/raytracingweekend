@@ -473,15 +473,19 @@ int main(void) {
       scalar choosemat = randomscalar(), radius = 0.2;
       vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
-      /*    struct sphere *sp;
+      int i;
 
-             for (sp = world.spheres; sp < world.spheres + world.n; sp++)
-                 if (v3length(v3sub(sp->center, center)) < sp->radius + radius)
-                   break;
-               if (sp - world.spheres < world.n) {
-                  b--;
-                 continue;
-               }*/
+      for (i = 0; i < world.n; i++) {
+        vec3 icenter = v3x4get(world.spheres[i / 4].center, i % 4);
+        scalar iradius = s4get(world.spheres[i / 4].radius, i % 4);
+        if (v3length(v3sub(icenter, center)) < iradius + radius)
+          break;
+      }
+      if (i < world.n) {
+        /* New random sphere intersects existing sphere. */
+        b--;
+        continue;
+      }
 
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
