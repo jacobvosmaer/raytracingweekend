@@ -50,7 +50,21 @@ struct sphere {
 };
 
 typedef struct {
-  struct sphere *spheres;
+  scalar s[4];
+} scalar4;
+
+typedef struct {
+  scalar4 x, y, z;
+} vec3x4;
+
+struct sphere4 {
+  vec3x4 center;
+  scalar4 radius;
+  material mat[4];
+};
+
+typedef struct {
+  struct sphere4 *spheres;
   int n, max;
 } spherelist;
 
@@ -121,6 +135,94 @@ ray rayfromto(vec3 from, vec3 to) {
   return r;
 }
 
+scalar4 s4add(scalar4 a, scalar4 b) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] += b.s[i];
+  return a;
+}
+
+scalar4 s4sub(scalar4 a, scalar4 b) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] -= b.s[i];
+  return a;
+}
+
+scalar4 s4mul(scalar4 a, scalar4 b) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] *= b.s[i];
+  return a;
+}
+
+scalar4 s4div(scalar4 a, scalar4 b) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] /= b.s[i];
+  return a;
+}
+
+scalar4 s4load(scalar x) {
+  scalar4 a;
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] = x;
+  return a;
+}
+
+scalar4 s4abs(scalar4 a) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] = fabs(a.s[i]);
+  return a;
+}
+
+scalar4 s4sqrt(scalar4 a) {
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] = sqrt(a.s[i]);
+  return a;
+}
+
+scalar s4get(scalar4 a, int i) { return a.s[i]; }
+
+vec3x4 v3x4load(vec3 v) {
+  vec3x4 vv;
+  vv.x = s4load(v.x);
+  vv.y = s4load(v.y);
+  vv.z = s4load(v.z);
+  return vv;
+}
+
+vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
+  vv.x.s[i] = v.x;
+  vv.y.s[i] = v.y;
+  vv.z.s[i] = v.z;
+  return vv;
+}
+
+vec3x4 v3x4sub(vec3x4 v, vec3x4 w) {
+  v.x = s4sub(v.x, w.x);
+  v.y = s4sub(v.y, w.y);
+  v.z = s4sub(v.z, w.z);
+  return v;
+}
+
+vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
+  v.x = s4mul(v.x, w.x);
+  v.y = s4mul(v.y, w.y);
+  v.z = s4mul(v.z, w.z);
+  return v;
+}
+
+scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
+  v = v3x4mul(v, w);
+  return s4add(s4add(v.x, v.y), v.z);
+}
+
+vec3 v3x4get(vec3x4 v, int i) { return v3(v.x.s[i], v.y.s[i], v.z.s[i]); }
+
 struct sphere sphere(vec3 center, scalar radius, material mat) {
   struct sphere sp;
   sp.center = center;
@@ -130,11 +232,18 @@ struct sphere sphere(vec3 center, scalar radius, material mat) {
 }
 
 void spherelistadd(spherelist *sl, struct sphere sp) {
-  if (sl->n == sl->max) {
+  struct sphere4 *sp4;
+  int i;
+  if (!(sl->n % 4) && sl->n / 4 == sl->max) {
     sl->max = sl->max ? 2 * sl->max : 1;
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
   }
-  sl->spheres[sl->n++] = sp;
+  sp4 = sl->spheres + sl->n / 4;
+  i = sl->n % 4;
+  sl->n++;
+  sp4->center = v3x4loadat(sp4->center, sp.center, i);
+  sp4->radius = s4load(sp.radius);
+  sp4->mat[i] = sp.mat;
 }
 
 pthread_key_t randomkey;
@@ -203,12 +312,53 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
   return 1;
 }
 
+int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
+               hitrecord *rec) {
+  vec3x4 rorig = v3x4load(r.orig), rdir = v3x4load(r.dir);
+  vec3x4 oc = v3x4sub(rorig, sp.center);
+  scalar4 a = v3x4dot(rdir, rdir);
+  scalar4 halfbneg = s4sub(s4load(0), v3x4dot(oc, rdir));
+  scalar4 c = s4sub(v3x4dot(oc, oc), s4mul(sp.radius, sp.radius));
+  scalar4 discriminant = s4sub(s4mul(halfbneg, halfbneg), s4mul(a, c));
+  scalar4 sqrtd, rootmin, rootmax;
+  int i, hit;
+
+  sqrtd = s4sqrt(s4abs(discriminant));
+  rootmin = s4div(s4sub(halfbneg, sqrtd), a);
+  rootmax = s4div(s4add(halfbneg, sqrtd), a);
+
+  hit = 0;
+  for (i = 0; i < 4 && i < maxi; i++) {
+    if (s4get(discriminant, i) >= 0) {
+      if (intervalsurrounds(t, s4get(rootmin, i))) {
+        t.max = s4get(rootmin, i);
+        hit = i + 1;
+      } else if (intervalsurrounds(t, s4get(rootmax, i))) {
+        t.max = s4get(rootmax, i);
+        hit = i + 1;
+      }
+    }
+  }
+  if (!hit)
+    return 0;
+  hit--;
+
+  rec->t = t.max;
+  rec->p = rayat(r, rec->t);
+  hitrecordsetnormal(rec, r,
+                     v3scale(v3sub(rec->p, v3x4get(sp.center, hit)),
+                             1.0 / s4get(sp.radius, hit)));
+  rec->mat = sp.mat[hit];
+  return 1;
+}
+
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int i, hit = 0;
   scalar closest = t.max;
 
-  for (i = 0; i < sl->n; i++) {
-    if (spherehit(sl->spheres[i], r, interval(t.min, closest), rec)) {
+  for (i = 0; i < sl->n; i += 4) {
+    if (spherehit4(sl->spheres[i / 4], r, interval(t.min, closest), sl->n - i,
+                   rec)) {
       hit = 1;
       closest = rec->t;
     }
@@ -451,16 +601,15 @@ int main(void) {
       scalar choosemat = randomscalar(), radius = 0.2;
       vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
-      struct sphere *sp;
+      /*    struct sphere *sp;
 
-      for (sp = world.spheres; sp < world.spheres + world.n; sp++)
-        if (v3length(v3sub(sp->center, center)) < sp->radius + radius)
-          break;
-      if (sp - world.spheres < world.n) {
-        /* overlap with existing sphere, try again */
-        b--;
-        continue;
-      }
+             for (sp = world.spheres; sp < world.spheres + world.n; sp++)
+                 if (v3length(v3sub(sp->center, center)) < sp->radius + radius)
+                   break;
+               if (sp - world.spheres < world.n) {
+                  b--;
+                 continue;
+               }*/
 
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
@@ -474,8 +623,8 @@ int main(void) {
   }
 
   cam.aspectratio = 16.0 / 9.0;
-  cam.imagewidth = 1200;
-  cam.samplesperpixel = 500;
+  cam.imagewidth = 400;
+  cam.samplesperpixel = 100;
   cam.maxdepth = 50;
 
   cam.vfov = 20;
