@@ -319,18 +319,16 @@ int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
 
 int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
                hitrecord *rec) {
-  vec3x4 rorig = v3x4load(r.orig), rdir = v3x4load(r.dir);
-  vec3x4 oc = v3x4sub(rorig, sp.center);
-  scalar4 a = v3x4dot(rdir, rdir);
-  scalar4 halfbneg = s4sub(s4load(0), v3x4dot(oc, rdir));
-  scalar4 c = s4sub(v3x4dot(oc, oc), s4mul(sp.radius, sp.radius));
-  scalar4 discriminant = s4sub(s4mul(halfbneg, halfbneg), s4mul(a, c));
-  scalar4 sqrtd, rootmin, rootmax;
+  vec3x4 rorig = v3x4load(r.orig), rdir = v3x4load(r.dir),
+         oc = v3x4sub(rorig, sp.center);
+  scalar4 a = v3x4dot(rdir, rdir),
+          halfbneg = s4sub(s4load(0), v3x4dot(oc, rdir)),
+          c = s4sub(v3x4dot(oc, oc), s4mul(sp.radius, sp.radius)),
+          discriminant = s4sub(s4mul(halfbneg, halfbneg), s4mul(a, c)),
+          sqrtd = s4sqrt(s4abs(discriminant)),
+          rootmin = s4div(s4sub(halfbneg, sqrtd), a),
+          rootmax = s4div(s4add(halfbneg, sqrtd), a);
   int i, hit;
-
-  sqrtd = s4sqrt(s4abs(discriminant));
-  rootmin = s4div(s4sub(halfbneg, sqrtd), a);
-  rootmax = s4div(s4add(halfbneg, sqrtd), a);
 
   hit = 0;
   for (i = 0; i < 4 && i < maxi; i++) {
