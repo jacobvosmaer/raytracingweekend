@@ -186,36 +186,6 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->normal = rec->frontface ? outwardnormal : v3neg(outwardnormal);
 }
 
-int spherehit(struct sphere sp, ray r, struct interval t, hitrecord *rec) {
-  vec3 oc = v3sub(r.orig, sp.center);
-  scalar a = v3dot(r.dir, r.dir);
-  scalar halfb = v3dot(oc, r.dir);
-  scalar c = v3dot(oc, oc) - sp.radius * sp.radius;
-  scalar discriminant = halfb * halfb - a * c;
-  scalar sqrtd, root;
-
-  if (discriminant < 0)
-    return 0; /* The ray does not hit the sphere */
-
-  /* The ray hits the sphere in 1 or 2 points (roots). Do any of the roots lie
-   * in the interval? */
-  sqrtd = sqrtf(discriminant);
-  root = (-halfb - sqrtd) / a; /* Prefer the nearest root. */
-  if (!intervalsurrounds(t, root)) {
-    root = (-halfb + sqrtd) / a;
-    if (!intervalsurrounds(t, root))
-      return 0;
-  }
-
-  /* Root is the nearest intersection of the ray and the sphere */
-  rec->t = root;
-  rec->p = rayat(r, rec->t);
-  hitrecordsetnormal(rec, r,
-                     v3scale(v3sub(rec->p, sp.center), 1.0 / sp.radius));
-  rec->mat = sp.mat;
-  return 1;
-}
-
 int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
                hitrecord *rec) {
   vec3x4 rorig = v3x4load(r.orig), rdir = v3x4load(r.dir),
