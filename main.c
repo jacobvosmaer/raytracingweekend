@@ -171,6 +171,11 @@ scalar4 s4load(scalar x) {
   return a;
 }
 
+scalar4 s4loadat(scalar4 a, scalar x, int i) {
+  a.s[i] = x;
+  return a;
+}
+
 scalar4 s4abs(scalar4 a) {
   int i;
   for (i = 0; i < 4; i++)
@@ -242,7 +247,7 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
   i = sl->n % 4;
   sl->n++;
   sp4->center = v3x4loadat(sp4->center, sp.center, i);
-  sp4->radius = s4load(sp.radius);
+  sp4->radius = s4loadat(sp4->radius, sp.radius, i);
   sp4->mat[i] = sp.mat;
 }
 
