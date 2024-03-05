@@ -6,7 +6,7 @@
 #endif
 
 #if defined(__ARM_NEON) && !defined(USENEON)
-#define USENEON 0
+#define USENEON 1
 #endif
 
 #if USENEON
@@ -14,6 +14,7 @@
 #include <arm_neon.h>
 typedef float32x4_t vec3;
 typedef float scalar;
+typedef float32x4_t scalar4;
 
 #elif USESSE
 
@@ -32,11 +33,11 @@ typedef struct {
   scalar s[4];
 } scalar4;
 
+#endif
+
 typedef struct {
   scalar4 x, y, z;
 } vec3x4;
-
-#endif
 
 scalar v3x(vec3 v);
 scalar v3y(vec3 v);

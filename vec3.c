@@ -27,6 +27,27 @@ vec3 v3mul(vec3 v, vec3 w) { return vmulq_f32(v, w); }
 vec3 v3scale(vec3 v, scalar c) { return vmulq_n_f32(v, c); }
 scalar v3dot(vec3 v, vec3 w) { return vaddvq_f32(vmulq_f32(v, w)); }
 
+scalar4 s4add(scalar4 a, scalar4 b) { return vaddq_f32(a, b); }
+scalar4 s4sub(scalar4 a, scalar4 b) { return vsubq_f32(a, b); }
+scalar4 s4mul(scalar4 a, scalar4 b) { return vmulq_f32(a, b); }
+scalar4 s4div(scalar4 a, scalar4 b) { return vdivq_f32(a, b); }
+scalar4 s4load(scalar x) {
+  float32_t ar[4];
+  ar[0] = x;
+  ar[1] = x;
+  ar[2] = x;
+  ar[3] = x;
+  return vld1q_f32(ar);
+}
+
+scalar4 s4loadat(scalar4 a, scalar x, int i) {
+  a[i] = x;
+  return a;
+}
+scalar4 s4abs(scalar4 a) { return vabsq_f32(a); }
+scalar4 s4sqrt(scalar4 a) { return vsqrtq_f32(a); }
+scalar s4get(scalar4 a, int i) { return a[i]; }
+
 #elif USESSE
 
 scalar v3x(vec3 v) { return v[0]; }
