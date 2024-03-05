@@ -49,14 +49,6 @@ struct sphere {
   material mat;
 };
 
-typedef struct {
-  scalar s[4];
-} scalar4;
-
-typedef struct {
-  scalar4 x, y, z;
-} vec3x4;
-
 struct sphere4 {
   vec3x4 center;
   scalar4 radius;
@@ -134,99 +126,6 @@ ray rayfromto(vec3 from, vec3 to) {
   r.dir = v3sub(to, from);
   return r;
 }
-
-scalar4 s4add(scalar4 a, scalar4 b) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] += b.s[i];
-  return a;
-}
-
-scalar4 s4sub(scalar4 a, scalar4 b) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] -= b.s[i];
-  return a;
-}
-
-scalar4 s4mul(scalar4 a, scalar4 b) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] *= b.s[i];
-  return a;
-}
-
-scalar4 s4div(scalar4 a, scalar4 b) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] /= b.s[i];
-  return a;
-}
-
-scalar4 s4load(scalar x) {
-  scalar4 a;
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] = x;
-  return a;
-}
-
-scalar4 s4loadat(scalar4 a, scalar x, int i) {
-  a.s[i] = x;
-  return a;
-}
-
-scalar4 s4abs(scalar4 a) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] = fabs(a.s[i]);
-  return a;
-}
-
-scalar4 s4sqrt(scalar4 a) {
-  int i;
-  for (i = 0; i < 4; i++)
-    a.s[i] = sqrt(a.s[i]);
-  return a;
-}
-
-scalar s4get(scalar4 a, int i) { return a.s[i]; }
-
-vec3x4 v3x4load(vec3 v) {
-  vec3x4 vv;
-  vv.x = s4load(v.x);
-  vv.y = s4load(v.y);
-  vv.z = s4load(v.z);
-  return vv;
-}
-
-vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
-  vv.x.s[i] = v.x;
-  vv.y.s[i] = v.y;
-  vv.z.s[i] = v.z;
-  return vv;
-}
-
-vec3x4 v3x4sub(vec3x4 v, vec3x4 w) {
-  v.x = s4sub(v.x, w.x);
-  v.y = s4sub(v.y, w.y);
-  v.z = s4sub(v.z, w.z);
-  return v;
-}
-
-vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
-  v.x = s4mul(v.x, w.x);
-  v.y = s4mul(v.y, w.y);
-  v.z = s4mul(v.z, w.z);
-  return v;
-}
-
-scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
-  v = v3x4mul(v, w);
-  return s4add(s4add(v.x, v.y), v.z);
-}
-
-vec3 v3x4get(vec3x4 v, int i) { return v3(v.x.s[i], v.y.s[i], v.z.s[i]); }
 
 struct sphere sphere(vec3 center, scalar radius, material mat) {
   struct sphere sp;
