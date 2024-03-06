@@ -207,11 +207,10 @@ int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
   hit = 0;
   for (i = 0; i < 4 && i < maxi; i++) {
     if (s4get(discriminant, i) >= 0) {
-      if (intervalsurrounds(t, s4get(rootmin, i))) {
-        t.max = s4get(rootmin, i);
-        hit = i + 1;
-      } else if (intervalsurrounds(t, s4get(rootmax, i))) {
-        t.max = s4get(rootmax, i);
+      scalar root;
+      if ((root = s4get(rootmin, i), intervalsurrounds(t, root)) ||
+          (root = s4get(rootmax, i), intervalsurrounds(t, root))) {
+        t.max = root;
         hit = i + 1;
       }
     }
