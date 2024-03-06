@@ -4,10 +4,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-scalar v3x(vec3 v) { return v.x; }
-scalar v3y(vec3 v) { return v.y; }
-scalar v3z(vec3 v) { return v.z; }
-
 vec3 v3(scalar x, scalar y, scalar z) {
   vec3 v;
   v.x = x;
@@ -54,9 +50,8 @@ vec3 v3neg(vec3 v) {
 scalar v3length(vec3 v) { return sqrtf(v3dot(v, v)); }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
 vec3 v3cross(vec3 v, vec3 w) {
-  return v3(v3y(v) * v3z(w) - v3z(v) * v3y(w),
-            v3z(v) * v3x(w) - v3x(v) * v3z(w),
-            v3x(v) * v3y(w) - v3y(v) * v3x(w));
+  return v3(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z,
+            v.x * w.y - v.y * w.x);
 }
 
 vec3 v3random(void) {
@@ -85,9 +80,9 @@ vec3 v3randominunitdisk(void) {
 
 vec3x4 v3x4load(vec3 v) {
   vec3x4 vv;
-  vv.x = s4load(v3x(v));
-  vv.y = s4load(v3y(v));
-  vv.z = s4load(v3z(v));
+  vv.x = s4load(v.x);
+  vv.y = s4load(v.y);
+  vv.z = s4load(v.z);
   return vv;
 }
 
@@ -114,8 +109,8 @@ vec3 v3x4get(vec3x4 v, int i) {
 }
 
 vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
-  vv.x = s4loadat(vv.x, v3x(v), i);
-  vv.y = s4loadat(vv.y, v3y(v), i);
-  vv.z = s4loadat(vv.z, v3z(v), i);
+  vv.x = s4loadat(vv.x, v.x, i);
+  vv.y = s4loadat(vv.y, v.y, i);
+  vv.z = s4loadat(vv.z, v.z, i);
   return vv;
 }

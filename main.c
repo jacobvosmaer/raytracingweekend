@@ -116,7 +116,7 @@ scalar intervalclamp(struct interval iv, scalar x) {
 
 int v3nearzero(vec3 v) {
   scalar s = 1e-8;
-  return fabsf(v3x(v)) < s && fabsf(v3y(v)) < s && fabsf(v3z(v)) < s;
+  return fabsf(v.x) < s && fabsf(v.y) < s && fabsf(v.z) < s;
 }
 
 vec3 rayat(ray r, scalar t) { return v3add(r.orig, v3scale(r.dir, t)); }
@@ -183,9 +183,9 @@ void writecolor(vec3 color, int nsamples) {
   struct interval intensity = interval(0, 0.999);
   color = v3scale(color, 1.0 / nsamples);
   /* Use sqrt as gamma correction */
-  r = intervalclamp(intensity, sqrtf(v3x(color)));
-  g = intervalclamp(intensity, sqrtf(v3y(color)));
-  b = intervalclamp(intensity, sqrtf(v3z(color)));
+  r = intervalclamp(intensity, sqrtf(color.x));
+  g = intervalclamp(intensity, sqrtf(color.y));
+  b = intervalclamp(intensity, sqrtf(color.z));
   printf("%d %d %d\n", (int)(256 * r), (int)(256 * g), (int)(256 * b));
 }
 
@@ -322,7 +322,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
     } else {
       /* ray has hit the sky */
       vec3 dir = v3unit(r.dir);
-      scalar a = 0.5 * (v3y(dir) + 1.0);
+      scalar a = 0.5 * (dir.y + 1.0);
       return v3mul(attenuation, v3add(v3scale(v3(1, 1, 1), 1.0 - a),
                                       v3scale(v3(0.5, 0.7, 1), a)));
     }
@@ -355,8 +355,8 @@ vec3 pixelsamplesquare(camera *c) {
 
 vec3 defocusdisksample(camera *c) {
   vec3 p = v3randominunitdisk();
-  return v3add(c->center, v3add(v3scale(c->defocusdisku, v3x(p)),
-                                v3scale(c->defocusdiskv, v3y(p))));
+  return v3add(c->center, v3add(v3scale(c->defocusdisku, p.x),
+                                v3scale(c->defocusdiskv, p.y)));
 }
 
 /* Getray returns a random ray near i, j. The randomness is for anti-aliasing.

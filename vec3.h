@@ -11,10 +11,6 @@ typedef struct {
   scalar4 x, y, z;
 } vec3x4;
 
-scalar v3x(vec3 v);
-scalar v3y(vec3 v);
-scalar v3z(vec3 v);
-
 vec3 v3(scalar x, scalar y, scalar z);
 vec3 v3add(vec3 v, vec3 w);
 vec3 v3sub(vec3 v, vec3 w);
