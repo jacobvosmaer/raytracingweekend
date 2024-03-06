@@ -195,59 +195,51 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
   rec->normal = rec->frontface ? outwardnormal : v3neg(outwardnormal);
 }
 
-int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
-               hitrecord *rec) {
-  vec3x4 rdir = v3x4load(r.dir), oc = v3x4sub(v3x4load(r.orig), sp.center);
-  scalar4 a = v3x4dot(rdir, rdir);
-  scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
-  scalar4 c = s4mulsub(v3x4dot(oc, oc), sp.radius, sp.radius),
-          discriminant = s4mulsub(s4mul(halfbneg, halfbneg), a, c);
-  scalar4 sqrtd, rootmin, rootmax;
-  int i, hit;
+int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
+  int hiti;
+  vec3x4 rdir = v3x4load(r.dir), rorig = v3x4load(r.orig);
+  scalar4 a = s4load(v3dot(r.dir, r.dir));
+  struct sphere4 *sp4, *hitsp = 0;
 
-  if (s4max(discriminant) < 0)
-    return 0;
+  for (sp4 = sl->spheres; sp4 < sl->spheres + (sl->n + 3) / 4; sp4++) {
+    int i, maxi;
+    vec3x4 oc = v3x4sub(rorig, sp4->center);
+    scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
+    scalar4 c = s4mulsub(v3x4dot(oc, oc), sp4->radius, sp4->radius),
+            discriminant = s4mulsub(s4mul(halfbneg, halfbneg), a, c);
+    scalar4 sqrtd, rootmin, rootmax;
 
-  sqrtd = s4sqrt(s4abs(discriminant));
-  rootmin = s4div(s4sub(halfbneg, sqrtd), a);
-  rootmax = s4div(s4add(halfbneg, sqrtd), a);
+    if (s4max(discriminant) < 0)
+      continue;
 
-  hit = 0;
-  for (i = 0; i < 4 && i < maxi; i++) {
-    if (s4get(discriminant, i) >= 0) {
-      scalar root;
-      if ((root = s4get(rootmin, i), intervalsurrounds(t, root)) ||
-          (root = s4get(rootmax, i), intervalsurrounds(t, root))) {
-        t.max = root;
-        hit = i + 1;
+    sqrtd = s4sqrt(s4abs(discriminant));
+    rootmin = s4div(s4sub(halfbneg, sqrtd), a);
+    rootmax = s4div(s4add(halfbneg, sqrtd), a);
+
+    maxi = sl->n - 4 * (sp4 - sl->spheres);
+    for (i = 0; i < 4 && i < maxi; i++) {
+      if (s4get(discriminant, i) >= 0) {
+        scalar root;
+        if ((root = s4get(rootmin, i), intervalsurrounds(t, root)) ||
+            (root = s4get(rootmax, i), intervalsurrounds(t, root))) {
+          t.max = root;
+          hitsp = sp4;
+          hiti = i;
+        }
       }
     }
   }
-  if (!hit)
+
+  if (!hitsp)
     return 0;
-  hit--;
 
   rec->t = t.max;
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
-                     v3scale(v3sub(rec->p, v3x4get(sp.center, hit)),
-                             1.0 / s4get(sp.radius, hit)));
-  rec->mat = sp.mat[hit];
+                     v3scale(v3sub(rec->p, v3x4get(hitsp->center, hiti)),
+                             1.0 / s4get(hitsp->radius, hiti)));
+  rec->mat = hitsp->mat[hiti];
   return 1;
-}
-
-int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
-  int i, hit = 0;
-  scalar closest = t.max;
-
-  for (i = 0; i < sl->n; i += 4) {
-    if (spherehit4(sl->spheres[i / 4], r, interval(t.min, closest), sl->n - i,
-                   rec)) {
-      hit = 1;
-      closest = rec->t;
-    }
-  }
-  return hit;
 }
 
 vec3 reflect(vec3 v, vec3 n) { return v3sub(v, v3scale(n, 2 * v3dot(v, n))); }
