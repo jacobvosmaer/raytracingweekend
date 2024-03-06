@@ -8,14 +8,7 @@ scalar4 s4add(scalar4 a, scalar4 b) { return vaddq_f32(a, b); }
 scalar4 s4sub(scalar4 a, scalar4 b) { return vsubq_f32(a, b); }
 scalar4 s4mul(scalar4 a, scalar4 b) { return vmulq_f32(a, b); }
 scalar4 s4div(scalar4 a, scalar4 b) { return vdivq_f32(a, b); }
-scalar4 s4load(scalar x) {
-  scalar4 a;
-  a[0] = x;
-  a[1] = x;
-  a[2] = x;
-  a[3] = x;
-  return a;
-}
+scalar4 s4load(scalar x) { return vdupq_n_f32(x); }
 
 scalar4 s4loadat(scalar4 a, scalar x, int i) {
   a[i] = x;
