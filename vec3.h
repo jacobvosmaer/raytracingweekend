@@ -56,6 +56,7 @@ scalar4 s4load(scalar x);
 scalar4 s4loadat(scalar4 a, scalar x, int i);
 scalar4 s4abs(scalar4 a);
 scalar4 s4sqrt(scalar4 a);
+scalar s4max(scalar4 a);
 scalar4 v3x4dot(vec3x4 v, vec3x4 w);
 
 vec3x4 v3x4load(vec3 v);

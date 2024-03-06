@@ -199,6 +199,9 @@ int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
           rootmax = s4div(s4add(halfbneg, sqrtd), a);
   int i, hit;
 
+  if (s4max(discriminant) < 0.0)
+    return 0;
+
   hit = 0;
   for (i = 0; i < 4 && i < maxi; i++) {
     if (s4get(discriminant, i) >= 0) {
