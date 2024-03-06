@@ -189,16 +189,15 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
 
 int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
                hitrecord *rec) {
-  vec3x4 rorig = v3x4load(r.orig), rdir = v3x4load(r.dir),
-         oc = v3x4sub(rorig, sp.center);
+  vec3x4 rdir = v3x4load(r.dir), oc = v3x4sub(v3x4load(r.orig), sp.center);
   scalar4 a = v3x4dot(rdir, rdir),
           halfbneg = s4sub(s4load(0), v3x4dot(oc, rdir)),
           c = s4sub(v3x4dot(oc, oc), s4mul(sp.radius, sp.radius)),
-          discriminant = s4sub(s4mul(halfbneg, halfbneg), s4mul(a, c)), sqrtd,
-          rootmin, rootmax;
+          discriminant = s4sub(s4mul(halfbneg, halfbneg), s4mul(a, c));
+  scalar4 sqrtd, rootmin, rootmax;
   int i, hit;
 
-  if (s4max(discriminant) < 0.0)
+  if (s4max(discriminant) < 0)
     return 0;
 
   sqrtd = s4sqrt(s4abs(discriminant));
