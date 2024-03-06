@@ -104,9 +104,10 @@ vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
   return v;
 }
 
+static scalar4 zero4 = {0};
+
 scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
-  v = v3x4mul(v, w);
-  return s4add(s4add(v.x, v.y), v.z);
+  return s4mulacc(s4mulacc(s4mulacc(zero4, v.x, w.x), v.y, w.y), v.z, w.z);
 }
 
 vec3 v3x4get(vec3x4 v, int i) {

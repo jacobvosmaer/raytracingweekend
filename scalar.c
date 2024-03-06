@@ -24,6 +24,7 @@ scalar4 s4loadat(scalar4 a, scalar x, int i) {
 
 scalar4 s4abs(scalar4 a) { return vabsq_f32(a); }
 scalar4 s4sqrt(scalar4 a) { return vsqrtq_f32(a); }
+scalar4 s4mulacc(scalar4 a, scalar4 b, scalar4 c) { return vmlaq_f32(a, b, c); }
 scalar s4get(scalar4 a, int i) { return a[i]; }
 scalar s4max(scalar4 a) { return vmaxvq_f32(a); }
 
@@ -84,6 +85,9 @@ scalar4 s4sqrt(scalar4 a) {
   return a;
 }
 
+scalar4 s4mulacc(scalar4 a, scalar4 b, scalar4 c) {
+  return s4add(a, s4mul(b, c));
+}
 scalar s4get(scalar4 a, int i) { return a.s[i]; }
 
 scalar s4max(scalar4 a) {
