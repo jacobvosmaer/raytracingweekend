@@ -29,6 +29,7 @@ scalar4 s4loadat(scalar4 a, scalar x, int i);
 scalar4 s4abs(scalar4 a);
 scalar4 s4sqrt(scalar4 a);
 scalar4 s4mulacc(scalar4 a, scalar4 b, scalar4 c);
+scalar4 s4mulsub(scalar4 a, scalar4 b, scalar4 c);
 
 scalar s4max(scalar4 a);
 scalar s4get(scalar4 a, int i);
