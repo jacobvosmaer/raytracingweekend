@@ -65,7 +65,7 @@ typedef struct {
   vec3 p, normal;
   scalar t;
   int frontface;
-  material mat;
+  material *mat;
 } hitrecord;
 
 scalar pi = 3.1415926536;
@@ -225,7 +225,7 @@ int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, v3x4get(sp.center, hit)),
                              1.0 / s4get(sp.radius, hit)));
-  rec->mat = *sp.mat[hit];
+  rec->mat = sp.mat[hit];
   return 1;
 }
 
@@ -262,8 +262,8 @@ scalar reflectance(scalar cosine, scalar refidx) {
  * function raycolor below. If scatter returns 0 the in ray has been fully
  * absorbed. If it returns a non-zero value then attenuation and scattered
  * describe the outbound ray. */
-int scatter(material mat, ray in, hitrecord *rec, vec3 *attenuation,
-            ray *scattered) {
+int scatter(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered) {
+  material mat = *(rec->mat);
   if (mat.type == LAMBERTIAN) {
     struct lambertian data = mat.data.lambertian;
     vec3 scatterdirection = v3add(rec->normal, v3randomunit());
@@ -313,7 +313,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
       /* ray has hit an object */
       ray scattered;
       vec3 newattenuation;
-      if (scatter(rec.mat, r, &rec, &newattenuation, &scattered)) {
+      if (scatter(r, &rec, &newattenuation, &scattered)) {
         r = scattered;
         attenuation = v3mul(attenuation, newattenuation);
         depth--;
