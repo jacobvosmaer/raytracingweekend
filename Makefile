@@ -1,6 +1,6 @@
 CFLAGS+=-Wall -Werror -pedantic -std=gnu89 -O2 -flto -march=native
 LDLIBS+=-lm
-OBJS = main vec3.o mt19937.o
+OBJS = main vec3.o mt19937.o scalar.o
 
 all: main.txt
 main: vec3.o mt19937.o scalar.o
