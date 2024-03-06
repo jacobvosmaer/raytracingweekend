@@ -26,6 +26,7 @@ scalar4 s4abs(scalar4 a) { return vabsq_f32(a); }
 scalar4 s4sqrt(scalar4 a) { return vsqrtq_f32(a); }
 scalar4 s4mulacc(scalar4 a, scalar4 b, scalar4 c) { return vmlaq_f32(a, b, c); }
 scalar4 s4mulsub(scalar4 a, scalar4 b, scalar4 c) { return vmlsq_f32(a, b, c); }
+scalar4 s4neg(scalar4 a) { return vnegq_f32(a); }
 scalar s4get(scalar4 a, int i) { return a[i]; }
 scalar s4max(scalar4 a) { return vmaxvq_f32(a); }
 
@@ -100,6 +101,11 @@ scalar s4max(scalar4 a) {
     if (a.s[i] > a.s[0])
       a.s[0] = a.s[i];
   return a.s[0];
+}
+
+scalar4 s4neg(scalar4 a) {
+  scalar4 zero4 = {0};
+  return s4sub(zero4, a);
 }
 
 #endif
