@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef NTHREADS
 #define NTHREADS 8
@@ -432,10 +433,17 @@ void camerarender(camera *c, spherelist *world) {
       writecolor(*cameraoutputpixel(c, i, j), c->samplesperpixel);
 }
 
-int main(void) {
+int main(int argc, char **argv) {
   camera cam = CAMERADEFAULT;
   spherelist world = {0};
-  int a, b;
+  int a, b, small = 0;
+
+  if (argc == 2 && !strcmp(argv[1], "-small")) {
+    small = 1;
+  } else if (argc > 1) {
+    fprintf(stderr, "Usage: main [-small]\n");
+    return 1;
+  }
 
   randominit();
 
@@ -474,8 +482,8 @@ int main(void) {
   }
 
   cam.aspectratio = 16.0 / 9.0;
-  cam.imagewidth = 1200;
-  cam.samplesperpixel = 500;
+  cam.imagewidth = small ? 400 : 1200;
+  cam.samplesperpixel = small ? 100 : 500;
   cam.maxdepth = 50;
 
   cam.vfov = 20;
