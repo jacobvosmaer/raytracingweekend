@@ -1,24 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-typedef float scalar;
-
-#if defined(__ARM_NEON) && !defined(USENEON)
-#define USENEON 1
-#endif
-
-#if USENEON
-
-#include <arm_neon.h>
-typedef float32x4_t scalar4;
-
-#else
-
-typedef struct {
-  scalar s[4];
-} scalar4;
-
-#endif
+#include "scalar.h"
 
 typedef struct {
   scalar x, y, z;
@@ -48,23 +31,12 @@ vec3 v3randomunit(void);
 vec3 v3randominunitdisk(void);
 int v3nearzero(vec3 v);
 
-scalar4 s4add(scalar4 a, scalar4 b);
-scalar4 s4sub(scalar4 a, scalar4 b);
-scalar4 s4mul(scalar4 a, scalar4 b);
-scalar4 s4div(scalar4 a, scalar4 b);
-scalar4 s4load(scalar x);
-scalar4 s4loadat(scalar4 a, scalar x, int i);
-scalar4 s4abs(scalar4 a);
-scalar4 s4sqrt(scalar4 a);
-scalar s4max(scalar4 a);
-scalar4 v3x4dot(vec3x4 v, vec3x4 w);
-
 vec3x4 v3x4load(vec3 v);
 vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i);
 vec3x4 v3x4sub(vec3x4 v, vec3x4 w);
 vec3x4 v3x4mul(vec3x4 v, vec3x4 w);
 
-scalar s4get(scalar4 a, int i);
+scalar4 v3x4dot(vec3x4 v, vec3x4 w);
 vec3 v3x4get(vec3x4 v, int i);
 
 #endif

@@ -3,7 +3,7 @@ LDLIBS+=-lm
 OBJS = main vec3.o mt19937.o
 
 all: main.txt
-main: vec3.o mt19937.o
+main: vec3.o mt19937.o scalar.o
 main.txt: main
 	objdump -d $< > $@
 debug: CFLAGS += -fsanitize=address
