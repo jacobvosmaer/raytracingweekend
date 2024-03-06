@@ -4,8 +4,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-static vec3 zero;
-
 scalar v3x(vec3 v) { return v.x; }
 scalar v3y(vec3 v) { return v.y; }
 scalar v3z(vec3 v) { return v.z; }
@@ -48,7 +46,10 @@ vec3 v3scale(vec3 v, scalar c) {
 
 scalar v3dot(vec3 v, vec3 w) { return v.x * w.x + v.y * w.y + v.z * w.z; }
 
-vec3 v3neg(vec3 v) { return v3sub(zero, v); }
+vec3 v3neg(vec3 v) {
+  vec3 zero = {0};
+  return v3sub(zero, v);
+}
 
 scalar v3length(vec3 v) { return sqrtf(v3dot(v, v)); }
 vec3 v3unit(vec3 v) { return v3scale(v, 1.0 / v3length(v)); }
@@ -104,10 +105,8 @@ vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
   return v;
 }
 
-static scalar4 zero4 = {0};
-
 scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
-  return s4mulacc(s4mulacc(s4mulacc(zero4, v.x, w.x), v.y, w.y), v.z, w.z);
+  return s4mulacc(s4mulacc(s4mul(v.x, w.x), v.y, w.y), v.z, w.z);
 }
 
 vec3 v3x4get(vec3x4 v, int i) {
