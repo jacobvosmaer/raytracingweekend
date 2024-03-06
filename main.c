@@ -199,10 +199,12 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int hiti;
   vec3x4 rdir = v3x4load(r.dir), rorig = v3x4load(r.orig);
   scalar4 a = s4load(v3dot(r.dir, r.dir));
-  struct sphere4 *sp4, *hitsp = 0;
+  struct sphere4 *sp4, *hitsp4 = 0;
 
   for (sp4 = sl->spheres; sp4 < sl->spheres + (sl->n + 3) / 4; sp4++) {
     int i, maxi;
+    /* We use vectorization to calculate the intersections between r and 4
+     * spheres at a time. */
     vec3x4 oc = v3x4sub(rorig, sp4->center);
     scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
     scalar4 c = s4mulsub(v3x4dot(oc, oc), sp4->radius, sp4->radius),
@@ -210,12 +212,15 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
     scalar4 sqrtd, rootmin, rootmax;
 
     if (s4max(discriminant) < 0)
-      continue;
+      continue; /* None of the current 4 spheres is hit by r */
 
     sqrtd = s4sqrt(s4abs(discriminant));
     rootmin = s4div(s4sub(halfbneg, sqrtd), a);
     rootmax = s4div(s4add(halfbneg, sqrtd), a);
 
+    /* If the number of spheres in the list is not dividable by 4 then on the
+     * last block of 4 spheres we have some bogus trailing spheres. We use maxi
+     * to skip the trailing bogus spheres. */
     maxi = sl->n - 4 * (sp4 - sl->spheres);
     for (i = 0; i < 4 && i < maxi; i++) {
       if (s4get(discriminant, i) >= 0) {
@@ -223,22 +228,22 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
         if ((root = s4get(rootmin, i), intervalsurrounds(t, root)) ||
             (root = s4get(rootmax, i), intervalsurrounds(t, root))) {
           t.max = root;
-          hitsp = sp4;
+          hitsp4 = sp4;
           hiti = i;
         }
       }
     }
   }
 
-  if (!hitsp)
+  if (!hitsp4)
     return 0;
 
   rec->t = t.max;
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
-                     v3scale(v3sub(rec->p, v3x4get(hitsp->center, hiti)),
-                             1.0 / s4get(hitsp->radius, hiti)));
-  rec->mat = hitsp->mat[hiti];
+                     v3scale(v3sub(rec->p, v3x4get(hitsp4->center, hiti)),
+                             1.0 / s4get(hitsp4->radius, hiti)));
+  rec->mat = hitsp4->mat[hiti];
   return 1;
 }
 
