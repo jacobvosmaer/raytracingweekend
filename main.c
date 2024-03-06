@@ -53,7 +53,7 @@ struct sphere {
 struct sphere4 {
   vec3x4 center;
   scalar4 radius;
-  material mat[4];
+  material *mat[4];
 };
 
 typedef struct {
@@ -148,7 +148,8 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
   sl->n++;
   sp4->center = v3x4loadat(sp4->center, sp.center, i);
   sp4->radius = s4loadat(sp4->radius, sp.radius, i);
-  sp4->mat[i] = sp.mat;
+  assert(sp4->mat[i] = malloc(sizeof(*(sp4->mat[i]))));
+  *sp4->mat[i] = sp.mat;
 }
 
 pthread_key_t randomkey;
@@ -224,7 +225,7 @@ int spherehit4(struct sphere4 sp, ray r, struct interval t, int maxi,
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, v3x4get(sp.center, hit)),
                              1.0 / s4get(sp.radius, hit)));
-  rec->mat = sp.mat[hit];
+  rec->mat = *sp.mat[hit];
   return 1;
 }
 
