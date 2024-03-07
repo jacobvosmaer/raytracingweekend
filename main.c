@@ -318,11 +318,11 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
       }
       return black;
     } else {
-      /* ray has hit the sky */
       vec3 dir = v3unit(r.dir);
       scalar a = 0.5 * (dir.y + 1.0);
-      return v3mul(attenuation, v3add(v3scale(v3(1, 1, 1), 1.0 - a),
-                                      v3scale(v3(0.5, 0.7, 1), a)));
+      vec3 white = v3(1, 1, 1), blue = v3(0.5, 0.7, 1),
+           skygradient = v3add(v3scale(white, 1.0 - a), v3scale(blue, a));
+      return v3mul(attenuation, skygradient);
     }
   }
   return black;
