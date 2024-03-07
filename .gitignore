@@ -2,3 +2,4 @@ main
 *.ppm
 *.o
 main.txt
+*.dSYM/
