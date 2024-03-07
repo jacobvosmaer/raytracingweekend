@@ -152,13 +152,6 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
   *sp4->mat[i] = sp.mat;
 }
 
-#define foreachsphere(i, sp, sl)                                               \
-  for ((i) = 0, (sp).center = v3x4get((sl)->spheres[(i) / 4].center, (i) % 4), \
-      (sp).radius = s4get((sl)->spheres[(i) / 4].radius, (i) % 4);             \
-       (i) < (sl)->n;                                                          \
-       (i)++, (sp).center = v3x4get((sl)->spheres[(i) / 4].center, (i) % 4),   \
-      (sp).radius = s4get((sl)->spheres[(i) / 4].radius, (i) % 4))
-
 pthread_key_t randomkey;
 
 void randominit(void) {
@@ -495,11 +488,13 @@ int main(int argc, char **argv) {
       vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
       material mat;
       int i;
-      struct sphere sp;
 
-      foreachsphere (i, sp, &world)
-        if (v3length(v3sub(sp.center, center)) < sp.radius + radius)
+      for (i = 0; i < world.n; i++) {
+        vec3 icenter = v3x4get(world.spheres[i / 4].center, i % 4);
+        scalar iradius = s4get(world.spheres[i / 4].radius, i % 4);
+        if (v3length(v3sub(icenter, center)) < iradius + radius)
           break;
+      }
       if (i < world.n) {
         /* New random sphere intersects existing sphere. */
         b--;
