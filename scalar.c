@@ -97,8 +97,10 @@ scalar s4max(scalar4 a) {
 }
 
 scalar4 s4neg(scalar4 a) {
-  scalar4 zero4 = {0};
-  return s4sub(zero4, a);
+  int i;
+  for (i = 0; i < 4; i++)
+    a.s[i] = a.s[i];
+  return a;
 }
 
 #endif
