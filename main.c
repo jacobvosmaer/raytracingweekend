@@ -484,23 +484,22 @@ int main(int argc, char **argv) {
 
   for (a = -11; a < 11; a++) {
     for (b = -11; b < 11; b++) {
-      scalar choosemat = randomscalar(), radius = 0.2;
-      vec3 center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
+      scalar choosemat, radius = 0.2;
+      vec3 center;
       material mat;
       int i;
+
+    newrandomsphere:
+      center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
 
       for (i = 0; i < world.n; i++) {
         vec3 icenter = v3x4get(world.spheres[i / 4].center, i % 4);
         scalar iradius = s4get(world.spheres[i / 4].radius, i % 4);
         if (v3length(v3sub(icenter, center)) < iradius + radius)
-          break;
-      }
-      if (i < world.n) {
-        /* New random sphere intersects existing sphere. */
-        b--;
-        continue;
+          goto newrandomsphere;
       }
 
+      choosemat = randomscalar();
       if (choosemat < 0.8)
         mat = lambertian(v3mul(v3random(), v3random()));
       else if (choosemat < 0.95)
