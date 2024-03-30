@@ -30,7 +30,6 @@ int v3nearzero(vec3 v);
 vec3x4 v3x4load(vec3 v);
 vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i);
 vec3x4 v3x4sub(vec3x4 v, vec3x4 w);
-vec3x4 v3x4mul(vec3x4 v, vec3x4 w);
 
 scalar4 v3x4dot(vec3x4 v, vec3x4 w);
 vec3 v3x4get(vec3x4 v, int i);
