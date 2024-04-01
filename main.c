@@ -50,11 +50,11 @@ struct sphere {
 struct sphere8 {
   vec3x8 center;
   scalar4 radius[2];
-  material *mat[8];
 };
 
 typedef struct {
   struct sphere8 *spheres;
+  material *mat;
   int n, max;
 } spherelist;
 
@@ -139,14 +139,14 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
   if (!(sl->n % 8) && sl->n / 8 == sl->max) {
     sl->max = sl->max ? 2 * sl->max : 1;
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
+    assert(sl->mat = realloc(sl->mat, 8 * sl->max * sizeof(*sl->mat)));
   }
   sp8 = sl->spheres + sl->n / 8;
   i = sl->n % 8;
-  sl->n++;
   sp8->center = v3x8loadat(sp8->center, sp.center, i);
   sp8->radius[i / 4] = s4loadat(sp8->radius[i / 4], sp.radius, i % 4);
-  assert(sp8->mat[i] = malloc(sizeof(*(sp8->mat[i]))));
-  *sp8->mat[i] = sp.mat;
+  sl->mat[sl->n] = sp.mat;
+  sl->n++;
 }
 
 pthread_key_t randomkey;
@@ -238,7 +238,7 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, v3x8get(hitsp8->center, hiti)),
                              1.0 / s8get(hitsp8->radius, hiti)));
-  rec->mat = hitsp8->mat[hiti];
+  rec->mat = sl->mat + 8 * (hitsp8 - sl->spheres) + hiti;
   return 1;
 }
 
