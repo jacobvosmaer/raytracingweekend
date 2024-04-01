@@ -14,9 +14,6 @@
 
 #define nelem(x) (sizeof(x) / sizeof(*(x)))
 #define endof(x) ((x) + nelem(x))
-#define assert(x)                                                              \
-  if (!(x))                                                                    \
-  __builtin_trap()
 
 struct interval {
   scalar min, max;
@@ -50,14 +47,14 @@ struct sphere {
   material mat;
 };
 
-struct sphere4 {
-  vec3x4 center;
-  scalar4 radius;
-  material *mat[4];
+struct sphere8 {
+  vec3x8 center;
+  scalar4 radius[2];
+  material *mat[8];
 };
 
 typedef struct {
-  struct sphere4 *spheres;
+  struct sphere8 *spheres;
   int n, max;
 } spherelist;
 
@@ -137,19 +134,19 @@ struct sphere sphere(vec3 center, scalar radius, material mat) {
 }
 
 void spherelistadd(spherelist *sl, struct sphere sp) {
-  struct sphere4 *sp4;
+  struct sphere8 *sp8;
   int i;
-  if (!(sl->n % 4) && sl->n / 4 == sl->max) {
+  if (!(sl->n % 8) && sl->n / 8 == sl->max) {
     sl->max = sl->max ? 2 * sl->max : 1;
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
   }
-  sp4 = sl->spheres + sl->n / 4;
-  i = sl->n % 4;
+  sp8 = sl->spheres + sl->n / 8;
+  i = sl->n % 8;
   sl->n++;
-  sp4->center = v3x4loadat(sp4->center, sp.center, i);
-  sp4->radius = s4loadat(sp4->radius, sp.radius, i);
-  assert(sp4->mat[i] = malloc(sizeof(*(sp4->mat[i]))));
-  *sp4->mat[i] = sp.mat;
+  sp8->center = v3x8loadat(sp8->center, sp.center, i);
+  sp8->radius[i / 4] = s4loadat(sp8->radius[i / 4], sp.radius, i % 4);
+  assert(sp8->mat[i] = malloc(sizeof(*(sp8->mat[i]))));
+  *sp8->mat[i] = sp.mat;
 }
 
 pthread_key_t randomkey;
@@ -190,53 +187,58 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
 
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int hiti;
-  vec3x4 rdir = v3x4load(r.dir), rorig = v3x4load(r.orig);
+  vec3x8 rdir = v3x8load(r.dir), rorig = v3x8load(r.orig);
   scalar4 a = s4load(v3dot(r.dir, r.dir));
-  struct sphere4 *sp4, *hitsp4 = 0;
+  struct sphere8 *sp8, *hitsp8 = 0;
 
-  for (sp4 = sl->spheres; sp4 < sl->spheres + (sl->n + 3) / 4; sp4++) {
-    int i, maxi;
-    /* We use vectorization to calculate the intersections between r and 4
+  for (sp8 = sl->spheres; sp8 < sl->spheres + (sl->n + 7) / 8; sp8++) {
+    int i, maxi, j;
+    /* We use vectorization to calculate the intersections between r and 8
      * spheres at a time. */
-    vec3x4 oc = v3x4sub(rorig, sp4->center);
-    scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
-    scalar4 c = s4mulsub(v3x4dot(oc, oc), sp4->radius, sp4->radius),
-            discriminant = s4mulsub(s4mul(halfbneg, halfbneg), a, c);
-    scalar4 sqrtd, rootmin, rootmax;
+    vec3x8 oc = v3x8sub(rorig, sp8->center);
+    scalar8 halfbneg, discriminant, c, sqrtd, rootmin, rootmax;
 
-    if (s4max(discriminant) < 0)
-      continue; /* None of the current 4 spheres is hit by r */
+    for (j = 0; j < 2; j++) {
+      halfbneg[j] = s4neg(v3x8dot(oc, rdir, j));
+      c[j] = s4mulsub(v3x8dot(oc, oc, j), sp8->radius[j], sp8->radius[j]);
+      discriminant[j] = s4mulsub(s4mul(halfbneg[j], halfbneg[j]), a, c[j]);
+    }
 
-    sqrtd = s4sqrt(s4abs(discriminant));
-    rootmin = s4div(s4sub(halfbneg, sqrtd), a);
-    rootmax = s4div(s4add(halfbneg, sqrtd), a);
+    if ((s4max(discriminant[0]) < 0) && (s4max(discriminant[1]) < 0))
+      continue; /* None of the current 8 spheres is hit by r */
+
+    for (j = 0; j < 2; j++) {
+      sqrtd[j] = s4sqrt(s4abs(discriminant[j]));
+      rootmin[j] = s4div(s4sub(halfbneg[j], sqrtd[j]), a);
+      rootmax[j] = s4div(s4add(halfbneg[j], sqrtd[j]), a);
+    }
 
     /* If the number of spheres in the list is not dividable by 4 then on the
      * last block of 4 spheres we have some bogus trailing spheres. We use maxi
      * to skip the trailing bogus spheres. */
-    maxi = sl->n - 4 * (sp4 - sl->spheres);
-    for (i = 0; i < 4 && i < maxi; i++) {
-      if (s4get(discriminant, i) >= 0) {
+    maxi = sl->n - 8 * (sp8 - sl->spheres);
+    for (i = 0; i < 8 && i < maxi; i++) {
+      if (s8get(discriminant, i) >= 0) {
         scalar root;
-        if ((root = s4get(rootmin, i), intervalsurrounds(t, root)) ||
-            (root = s4get(rootmax, i), intervalsurrounds(t, root))) {
+        if ((root = s8get(rootmin, i), intervalsurrounds(t, root)) ||
+            (root = s8get(rootmax, i), intervalsurrounds(t, root))) {
           t.max = root;
-          hitsp4 = sp4;
+          hitsp8 = sp8;
           hiti = i;
         }
       }
     }
   }
 
-  if (!hitsp4)
+  if (!hitsp8)
     return 0;
 
   rec->t = t.max;
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
-                     v3scale(v3sub(rec->p, v3x4get(hitsp4->center, hiti)),
-                             1.0 / s4get(hitsp4->radius, hiti)));
-  rec->mat = hitsp4->mat[hiti];
+                     v3scale(v3sub(rec->p, v3x8get(hitsp8->center, hiti)),
+                             1.0 / s8get(hitsp8->radius, hiti)));
+  rec->mat = hitsp8->mat[hiti];
   return 1;
 }
 
@@ -493,8 +495,13 @@ int main(int argc, char **argv) {
       center = v3add(v3(a, radius, b), v3mul(v3(0.9, 0, 0.9), v3random()));
 
       for (i = 0; i < world.n; i++) {
-        vec3 icenter = v3x4get(world.spheres[i / 4].center, i % 4);
-        scalar iradius = s4get(world.spheres[i / 4].radius, i % 4);
+        struct sphere8 *sp8 = world.spheres + i / 8;
+        int j = i % 8;
+        vec3 icenter = v3x8get(sp8->center, j);
+        scalar iradius = s8get(sp8->radius, j);
+        if (0)
+          fprintf(stderr, "icenter={%g,%g,%g} iradius=%g\n", icenter.x,
+                  icenter.y, icenter.z, iradius);
         if (v3length(v3sub(icenter, center)) < iradius + radius)
           goto newrandomsphere;
       }

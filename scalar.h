@@ -20,6 +20,8 @@ typedef struct {
 
 #endif
 
+typedef scalar4 scalar8[2];
+
 scalar4 s4add(scalar4 a, scalar4 b);
 scalar4 s4sub(scalar4 a, scalar4 b);
 scalar4 s4mul(scalar4 a, scalar4 b);
@@ -34,5 +36,10 @@ scalar4 s4mulsub(scalar4 a, scalar4 b, scalar4 c);
 
 scalar s4max(scalar4 a);
 scalar s4get(scalar4 a, int i);
+scalar s8get(scalar8 aa, int i);
+
+#define assert(x)                                                              \
+  if (!(x))                                                                    \
+  __builtin_trap()
 
 #endif

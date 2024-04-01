@@ -8,8 +8,8 @@ typedef struct {
 } vec3;
 
 typedef struct {
-  scalar4 x, y, z;
-} vec3x4;
+  scalar4 x[2], y[2], z[2];
+} vec3x8;
 
 vec3 v3(scalar x, scalar y, scalar z);
 vec3 v3add(vec3 v, vec3 w);
@@ -27,11 +27,11 @@ vec3 v3randomunit(void);
 vec3 v3randominunitdisk(void);
 int v3nearzero(vec3 v);
 
-vec3x4 v3x4load(vec3 v);
-vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i);
-vec3x4 v3x4sub(vec3x4 v, vec3x4 w);
+vec3x8 v3x8load(vec3 v);
+vec3x8 v3x8loadat(vec3x8 vv, vec3 v, int i);
+vec3x8 v3x8sub(vec3x8 v, vec3x8 w);
 
-scalar4 v3x4dot(vec3x4 v, vec3x4 w);
-vec3 v3x4get(vec3x4 v, int i);
+scalar4 v3x8dot(vec3x8 v, vec3x8 w, int i);
+vec3 v3x8get(vec3x8 v, int i);
 
 #endif

@@ -74,39 +74,39 @@ vec3 v3randominunitdisk(void) {
   }
 }
 
-vec3x4 v3x4load(vec3 v) {
-  vec3x4 vv;
-  vv.x = s4load(v.x);
-  vv.y = s4load(v.y);
-  vv.z = s4load(v.z);
+vec3x8 v3x8load(vec3 v) {
+  vec3x8 vv;
+  vv.x[0] = vv.x[1] = s4load(v.x);
+  vv.y[0] = vv.y[1] = s4load(v.y);
+  vv.z[0] = vv.z[1] = s4load(v.z);
   return vv;
 }
 
-vec3x4 v3x4sub(vec3x4 v, vec3x4 w) {
-  v.x = s4sub(v.x, w.x);
-  v.y = s4sub(v.y, w.y);
-  v.z = s4sub(v.z, w.z);
+vec3x8 v3x8sub(vec3x8 v, vec3x8 w) {
+  v.x[0] = s4sub(v.x[0], w.x[0]);
+  v.x[1] = s4sub(v.x[1], w.x[1]);
+  v.y[0] = s4sub(v.y[0], w.y[0]);
+  v.y[1] = s4sub(v.y[1], w.y[1]);
+  v.z[0] = s4sub(v.z[0], w.z[0]);
+  v.z[1] = s4sub(v.z[1], w.z[1]);
   return v;
 }
 
-vec3x4 v3x4mul(vec3x4 v, vec3x4 w) {
-  v.x = s4mul(v.x, w.x);
-  v.y = s4mul(v.y, w.y);
-  v.z = s4mul(v.z, w.z);
-  return v;
+scalar4 v3x8dot(vec3x8 v, vec3x8 w, int i) {
+  return s4mulacc(s4mulacc(s4mul(v.x[i], w.x[i]), v.y[i], w.y[i]), v.z[i],
+                  w.z[i]);
 }
 
-scalar4 v3x4dot(vec3x4 v, vec3x4 w) {
-  return s4mulacc(s4mulacc(s4mul(v.x, w.x), v.y, w.y), v.z, w.z);
+vec3 v3x8get(vec3x8 v, int i) {
+  return v3(s4get(v.x[i / 4], i % 4), s4get(v.y[i / 4], i % 4),
+            s4get(v.z[i / 4], i % 4));
 }
 
-vec3 v3x4get(vec3x4 v, int i) {
-  return v3(s4get(v.x, i), s4get(v.y, i), s4get(v.z, i));
-}
-
-vec3x4 v3x4loadat(vec3x4 vv, vec3 v, int i) {
-  vv.x = s4loadat(vv.x, v.x, i);
-  vv.y = s4loadat(vv.y, v.y, i);
-  vv.z = s4loadat(vv.z, v.z, i);
+vec3x8 v3x8loadat(vec3x8 vv, vec3 v, int i) {
+  assert(i >= 0);
+  assert(i < 8);
+  vv.x[i / 4] = s4loadat(vv.x[i / 4], v.x, i % 4);
+  vv.y[i / 4] = s4loadat(vv.y[i / 4], v.y, i % 4);
+  vv.z[i / 4] = s4loadat(vv.z[i / 4], v.z, i % 4);
   return vv;
 }

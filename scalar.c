@@ -11,6 +11,8 @@ scalar4 s4div(scalar4 a, scalar4 b) { return vdivq_f32(a, b); }
 scalar4 s4load(scalar x) { return vdupq_n_f32(x); }
 
 scalar4 s4loadat(scalar4 a, scalar x, int i) {
+  assert(i >= 0);
+  assert(i < 4);
   a[i] = x;
   return a;
 }
@@ -21,6 +23,7 @@ scalar4 s4mulacc(scalar4 a, scalar4 b, scalar4 c) { return vmlaq_f32(a, b, c); }
 scalar4 s4mulsub(scalar4 a, scalar4 b, scalar4 c) { return vmlsq_f32(a, b, c); }
 scalar4 s4neg(scalar4 a) { return vnegq_f32(a); }
 scalar s4get(scalar4 a, int i) { return a[i]; }
+scalar s8get(scalar8 aa, int i) { return aa[i / 4][i % 4]; }
 scalar s4max(scalar4 a) { return vmaxvq_f32(a); }
 
 #else
@@ -62,6 +65,8 @@ scalar4 s4load(scalar x) {
 }
 
 scalar4 s4loadat(scalar4 a, scalar x, int i) {
+  assert(i >= 0);
+  assert(i < 4);
   a.s[i] = x;
   return a;
 }
@@ -87,6 +92,7 @@ scalar4 s4mulsub(scalar4 a, scalar4 b, scalar4 c) {
   return s4sub(a, s4mul(b, c));
 }
 scalar s4get(scalar4 a, int i) { return a.s[i]; }
+scalar s8get(scalar8 aa, int i) { return aa[i / 4].s[i % 4]; }
 
 scalar s4max(scalar4 a) {
   int i;
