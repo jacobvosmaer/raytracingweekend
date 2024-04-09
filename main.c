@@ -139,7 +139,7 @@ struct sphere sphere(vec3 center, scalar radius, material mat) {
 void spherelistadd(spherelist *sl, struct sphere sp) {
   struct sphere4 *sp4;
   int i;
-  if (!(sl->n % 4) && sl->n / 4 == sl->max) {
+  if (sl->n == 4 * sl->max) {
     sl->max = sl->max ? 2 * sl->max : 1;
     assert(sl->spheres = realloc(sl->spheres, sl->max * sizeof(*sl->spheres)));
     assert(sl->mat = realloc(sl->mat, sl->max * 4 * sizeof(*sl->mat)));
