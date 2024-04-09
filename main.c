@@ -52,7 +52,7 @@ struct sphere {
 
 struct sphere4 {
   vec3x4 center;
-  scalar4 radius;
+  scalar4 radius2;
 };
 
 typedef struct {
@@ -147,7 +147,7 @@ void spherelistadd(spherelist *sl, struct sphere sp) {
   sp4 = sl->spheres + sl->n / 4;
   i = sl->n % 4;
   sp4->center = v3x4loadat(sp4->center, sp.center, i);
-  sp4->radius = s4loadat(sp4->radius, sp.radius, i);
+  sp4->radius2 = s4loadat(sp4->radius2, sp.radius * sp.radius, i);
   sl->mat[sl->n] = sp.mat;
   sl->n++;
 }
@@ -199,7 +199,7 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
      * spheres at a time. */
     vec3x4 oc = v3x4sub(rorig, sp4->center);
     scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
-    scalar4 c = s4mulsub(v3x4dot(oc, oc), sp4->radius, sp4->radius),
+    scalar4 c = s4sub(v3x4dot(oc, oc), sp4->radius2),
             discriminant = s4sub(s4mul(halfbneg, halfbneg), c);
     scalar4 sqrtd, rootmin, rootmax;
 
@@ -234,7 +234,7 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   rec->p = rayat(r, rec->t);
   hitrecordsetnormal(rec, r,
                      v3scale(v3sub(rec->p, v3x4get(hitsp4->center, hiti)),
-                             1.0 / s4get(hitsp4->radius, hiti)));
+                             1.0 / sqrtf(s4get(hitsp4->radius2, hiti))));
   rec->mat = sl->mat + 4 * (hitsp4 - sl->spheres) + hiti;
   return 1;
 }
@@ -495,7 +495,7 @@ int main(int argc, char **argv) {
 
       for (i = 0; i < world.n; i++) {
         vec3 icenter = v3x4get(world.spheres[i / 4].center, i % 4);
-        scalar iradius = s4get(world.spheres[i / 4].radius, i % 4);
+        scalar iradius = sqrtf(s4get(world.spheres[i / 4].radius2, i % 4));
         if (v3length(v3sub(icenter, center)) < iradius + radius)
           goto newrandomsphere;
       }
