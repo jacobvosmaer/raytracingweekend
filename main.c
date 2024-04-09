@@ -191,7 +191,6 @@ void hitrecordsetnormal(hitrecord *rec, ray r, vec3 outwardnormal) {
 int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
   int hiti;
   vec3x4 rdir = v3x4load(r.dir), rorig = v3x4load(r.orig);
-  scalar4 a = s4load(v3dot(r.dir, r.dir));
   struct sphere4 *sp4, *hitsp4 = 0;
 
   for (sp4 = sl->spheres; sp4 < sl->spheres + (sl->n + 3) / 4; sp4++) {
@@ -201,15 +200,15 @@ int spherelisthit(spherelist *sl, ray r, struct interval t, hitrecord *rec) {
     vec3x4 oc = v3x4sub(rorig, sp4->center);
     scalar4 halfbneg = s4neg(v3x4dot(oc, rdir));
     scalar4 c = s4mulsub(v3x4dot(oc, oc), sp4->radius, sp4->radius),
-            discriminant = s4mulsub(s4mul(halfbneg, halfbneg), a, c);
+            discriminant = s4sub(s4mul(halfbneg, halfbneg), c);
     scalar4 sqrtd, rootmin, rootmax;
 
     if (s4max(discriminant) < 0)
       continue; /* None of the current 4 spheres is hit by r */
 
     sqrtd = s4sqrt(s4abs(discriminant));
-    rootmin = s4div(s4sub(halfbneg, sqrtd), a);
-    rootmax = s4div(s4add(halfbneg, sqrtd), a);
+    rootmin = s4sub(halfbneg, sqrtd);
+    rootmax = s4add(halfbneg, sqrtd);
 
     /* If the number of spheres in the list is not dividable by 4 then on the
      * last block of 4 spheres we have some bogus trailing spheres. We use maxi
@@ -304,6 +303,7 @@ int scatter(ray in, hitrecord *rec, vec3 *attenuation, ray *scattered) {
 vec3 raycolor(ray r, int depth, spherelist *world) {
   vec3 black = {0}, attenuation = v3(1, 1, 1);
 
+  r.dir = v3unit(r.dir);
   while (depth > 0) {
     hitrecord rec;
     if (spherelisthit(world, r, interval(0.001, INFINITY), &rec)) {
@@ -312,6 +312,7 @@ vec3 raycolor(ray r, int depth, spherelist *world) {
       vec3 newattenuation;
       if (scatter(r, &rec, &newattenuation, &scattered)) {
         r = scattered;
+        r.dir = v3unit(r.dir);
         attenuation = v3mul(attenuation, newattenuation);
         depth--;
         continue;
